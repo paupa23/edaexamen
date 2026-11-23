@@ -3,6 +3,7 @@
   'use strict';
   const C = window.EDA_CONTENT;
   const E = window.EDA_CHALLENGES;
+  const V = window.EDA_VISUALS;
   const KEY = 'eda_quest_city_v8';
   const main = document.getElementById('main');
   const $ = (s, el = document) => el.querySelector(s);
@@ -42,7 +43,7 @@
   paths.bus='<rect x="4" y="3" width="16" height="17" rx="4"/><path d="M4 11h16M8 3v8M7 20v2m10-2v2M7 16h1m8 0h1"/>';
   function icon(name, cls = '') { return `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name] || paths.book}</svg>`; }
   function readJSON(key, fallback) { try { const s = localStorage.getItem(key); return s ? JSON.parse(s) : fallback; } catch (_) { return fallback; } }
-  function fresh() { return {version:8,completed:{},earned:{},read:[],quiz:{},drafts:{},writtenReview:{},errors:{},settings:{sound:false,focus:false},session:null,lastResult:null,legacy:null,sequence:0}; }
+  function fresh() { return {version:8,completed:{},earned:{},read:[],quiz:{},drafts:{},writtenReview:{},errors:{},settings:{sound:false,focus:false,motion:true},session:null,lastResult:null,legacy:null,sequence:0}; }
   function load() {
     const old = readJSON(KEY, null);
     if (old && old.version === 8 && Array.isArray(old.read) && old.completed && old.earned && old.errors) return {...fresh(), ...old, settings:{...fresh().settings,...old.settings}};
@@ -57,7 +58,10 @@
   let page = 'map', theoryFilter='all', search='', writtenId='w0', writtenShown=false;
   let quizRun=null, quizPick=null, quizFeedback=null;
   let selectedChip=null, selectedMatch=null, modalAction=null, toastTimer=null, storageWarning=false, audioCtx=null;
-  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const motionQuery = matchMedia('(prefers-reduced-motion: reduce)');
+  const motionAllowed = () => !motionQuery.matches && state.settings.motion !== false;
+  let stageKey = '';
+  const animationEpoch = Date.now();
   function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (_) { if(!storageWarning){storageWarning=true;toast('El navegador no permite guardar: mantén esta pestaña abierta.');} } }
   function toast(msg) { const t=$('#toast'); t.textContent=msg; t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3300); }
   const xp = () => Object.values(state.earned).reduce((a,v)=>a+(Number(v)||0),0);
@@ -76,7 +80,9 @@
     $('#sound-button').setAttribute('aria-label',state.settings.sound?'Desactivar sonidos':'Activar sonidos');
     $('#sound-button').setAttribute('aria-pressed',String(!!state.settings.sound));
     document.body.classList.toggle('focus-mode',!!state.settings.focus&&page==='game');
-    document.querySelector('meta[name=theme-color]').content=document.documentElement.dataset.theme==='dark'?'#101d27':'#f3f3ed';
+    document.documentElement.dataset.motion=motionAllowed()?'on':'off';
+    document.documentElement.dataset.page=page;
+    document.querySelector('meta[name=theme-color]').content=document.documentElement.dataset.theme==='dark'?'#11152f':'#f3f5ff';
     document.querySelectorAll('.bottom-nav button').forEach(b=>{const active=b.dataset.page===(['briefing','game','result'].includes(page)?'map':['quiz','quiz-result','written','review'].includes(page)?'practice':page);if(active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
   }
   function navigate(to){page=to;selectedChip=null;selectedMatch=null;render();window.scrollTo({top:0,behavior:'instant'});main.focus({preventScroll:true});}
@@ -84,20 +90,26 @@
     updateChrome();
     if(page==='map')renderMap();else if(page==='theory')renderTheory();else if(page==='practice')renderPractice();else if(page==='profile')renderProfile();else if(page==='game')renderGame();else if(page==='result')renderResult();else if(page==='quiz')renderQuiz();else if(page==='quiz-result')renderQuizResult();else if(page==='written')renderWritten();
   }
-  function city(){
-    const active=id=>state.completed[id]?'repaired':'';
-    const windows=(x,y,w,h)=>Array.from({length:4},(_,i)=>`<rect class="city-window" x="${x+(i%2)*w}" y="${y+Math.floor(i/2)*h}" width="7" height="10" rx="2"/>`).join('');
-    return `<svg viewBox="0 0 420 300" class="city-svg" role="img" aria-label="Ciudad Delta: ${done()} de 5 zonas recuperadas"><ellipse class="city-ground" cx="210" cy="228" rx="175" ry="47"/><path d="M69 211 120 168 204 201 290 161 349 207M120 168 180 116 290 161" fill="none" class="city-connector" stroke-width="3"/><g class="${active('variables')}"><path class="city-block ${active('variables')}" d="M63 154h57v66H63zM58 154l33-24 35 24"/>${windows(75,168,22,23)}<text x="90" y="243" text-anchor="middle" class="city-label">ARCHIVO</text></g><g class="${active('autobuses')}"><rect class="city-block ${active('autobuses')}" x="141" y="185" width="67" height="37" rx="10"/><rect class="city-window" x="151" y="194" width="16" height="11" rx="2"/><rect class="city-window" x="174" y="194" width="23" height="11" rx="2"/><circle cx="157" cy="222" r="6" fill="var(--faint)"/><circle cx="193" cy="222" r="6" fill="var(--faint)"/></g><g class="${active('esperas')}"><path class="city-block ${active('esperas')}" d="M158 146V89h58v57Z"/><path d="M187 67v22m-10-10h20" stroke="var(--gold)" stroke-width="3"/><circle cx="187" cy="111" r="13" fill="var(--field)" stroke="var(--line)"/><path d="M187 102v9l6 4" stroke="var(--accent)" stroke-width="2" fill="none"/><text x="187" y="161" text-anchor="middle" class="city-label">OFICINA</text></g><g class="${active('graficos')}"><rect class="city-block ${active('graficos')}" x="254" y="114" width="54" height="75" rx="5"/>${windows(266,128,20,25)}<path d="M263 114V97h35v17" class="city-block ${active('graficos')}"/><text x="282" y="207" text-anchor="middle" class="city-label">OBSERVATORIO</text></g><g class="${active('auditoria')}"><path class="city-block ${active('auditoria')}" d="M322 174h40v46h-40zM317 174l25-18 25 18"/>${windows(329,184,16,18)}</g><g transform="translate(239 221)"><rect width="30" height="27" rx="9" fill="var(--accent)"/><path d="M15-6v6" stroke="var(--accent)" stroke-width="3"/><circle cx="15" cy="-7" r="3" fill="var(--gold)"/><rect x="6" y="8" width="5" height="6" rx="2" fill="var(--accent-ink)"/><rect x="20" y="8" width="5" height="6" rx="2" fill="var(--accent-ink)"/><path d="M11 20h9" stroke="var(--accent-ink)" stroke-width="2"/></g><path d="m104 76 3 7 7 3-7 3-3 7-3-7-7-3 7-3Zm227-8 2 5 5 2-5 2-2 5-2-5-5-2 5-2Z" class="city-star"/><circle cx="244" cy="55" r="2" class="city-star"/><circle cx="53" cy="111" r="2" class="city-star"/></svg>`;
+  function byteMessage(text,mood='idle'){
+    return `<div class="byte-message"><div class="byte-portrait" aria-hidden="true">${V.mascot(mood,84)}</div><div class="byte-bubble"><span class="byte-name">BYTE · TU COMPAÑERO</span><p>${esc(text)}</p></div></div>`;
+  }
+  function worldNode(m,n,next){
+    const points={variables:[170,727],autobuses:[420,592],esperas:[170,452],graficos:[420,317],auditoria:[230,167]};
+    const labels={variables:'El archivo',autobuses:'La estación',esperas:'La torre',graficos:'El observatorio',auditoria:'La gran auditoría'};
+    const [x,y]=points[m.id],complete=state.completed[m.id],locked=!unlocked(m),isCurrent=next.id===m.id&&!complete;
+    return `<button class="world-node ${complete?'completed':''} ${isCurrent?'current':''} ${locked?'locked':''}" style="--node-x:${x/6}%;--node-y:${y/8.3}%" data-action="brief" data-id="${m.id}" aria-label="${esc(m.title)}. ${locked?'Completa las cuatro primeras zonas para entrar':complete?complete.stars+' de 3 estrellas. Volver a jugar':isCurrent?'Siguiente misión. Entrar':'Entrar en la misión'}" ${locked?'aria-disabled="true"':''}><span class="node-number">${locked?icon('lock'):complete?icon('check'):n}</span><span class="node-label">${labels[m.id]}</span><span class="node-stars">${stars(complete?.stars||0)}</span><span class="node-state">${isCurrent?(done()?'SIGUIENTE MISIÓN':'¡EMPIEZA AQUÍ!'):complete?'RECUPERADA':locked?'MISIÓN FINAL':''}</span></button>`;
   }
   function renderMap(){
-    const next=nextMission(), all=done()===core().length;
-    main.innerHTML=`${state.session?`<div class="session-banner"><div><strong>Tu partida está guardada</strong><p>${esc(state.session.title)} · reto ${Math.min(state.session.index+1,state.session.queue.length)} de ${state.session.queue.length}</p></div><button class="btn" data-action="resume">Continuar ${icon('arrow')}</button></div>`:''}
-      <section class="hero"><div class="hero-copy"><span class="pill green">${icon('map')} UNA AVENTURA PARA TU EXAMEN</span><h1>${all?'La ciudad vuelve<br>a tener <em>sentido.</em>':'Los datos son un lío.<br><em>Tú tienes la clave.</em>'}</h1><p>${all?'Has reconstruido el informe de Ciudad Delta. Pon a prueba lo aprendido con nuevos datos o recupera una estrella.':'Viajes duplicados, esperas extrañas y gráficos sin sentido. Recupera Ciudad Delta resolviendo el misterio, un ejercicio cada vez.'}</p><div class="hero-actions"><button class="btn" data-action="${state.session?'resume':'brief'}" data-id="${next.id}">${state.session?'Continuar partida':all?'Nueva auditoría':'Empezar aventura'} ${icon('arrow')}</button><button class="btn secondary" data-action="how">Cómo se juega</button></div></div><div class="hero-art">${city()}<span class="city-footer">${done()} de 5 zonas recuperadas</span></div></section>
-      <div class="status-grid"><div class="status-card">${icon('bolt')}<div><b>${xp()}</b><small>Experiencia ganada</small></div></div><div class="status-card">${icon('star')}<div><b>${Object.values(state.completed).reduce((s,m)=>s+m.stars,0)}</b><small>Estrellas de precisión</small></div></div><div class="status-card">${icon('repeat')}<div><b>${Object.values(state.errors).filter(e=>!e.resolved).length}</b><small>Evidencias por repasar</small></div></div></div>
-      <div class="section-heading"><h2>Tu ruta por la ciudad</h2><small>5 misiones + un taller extra</small></div><div class="map-grid">${core().map((m,i)=>missionCard(m,i+1,next.id)).join('')}</div>
-      ${E.missions.filter(m=>m.extra).map(m=>missionCard(m,'+',null,'extra-card')).join('')}
-      <div class="helper-strip">${icon('robot')}<p><strong>Aprender también cuenta cuando te equivocas.</strong> Un fallo trae una explicación y una revancha. Puedes pausar la partida y volver cuando quieras.</p></div>
-      <p class="footer-note">EDA y contenido posterior · Sin Python inicial · ${C.topics.reduce((n,t)=>n+t.lessons.length,0)} lecciones de consulta</p>`;
+    const next=nextMission(),all=done()===core().length,starCount=Object.values(state.completed).reduce((n,m)=>n+m.stars,0),pending=Object.values(state.errors).filter(e=>!e.resolved).length;
+    const availableXP=E.makeMission(next.id,1).reduce((sum,_,i)=>sum+Math.max(0,20-(state.earned[next.id+':'+i]||0)),0);
+    const byte=all?'¡Ciudad Delta vuelve a brillar! ¿Vamos a por las estrellas que faltan?':done()?'Una zona menos a oscuras. Cada respuesta que construyes devuelve energía a la ciudad.':'¡Soy Byte! Los datos de la ciudad se han mezclado. Tú resuelves las evidencias; yo te acompaño.';
+    main.innerHTML=`<div class="game-map-page scene-enter"><header class="world-heading"><div><span class="eyebrow">TU AVENTURA DE EDA</span><h1>Ciudad <em>Delta.</em></h1><p>${all?'La ciudad está en tus manos. Sigue explorando.':'Cinco zonas. Un misterio. Tú tienes la clave.'}</p></div><div class="world-score"><span>${icon('star')}<strong>${starCount}</strong><small>estrellas</small></span><span>${icon('map')}<strong>${done()}/5</strong><small>zonas</small></span></div></header>
+      ${state.session?`<div class="session-banner"><div><strong>Tu aventura te espera</strong><p>${esc(state.session.title)} · evidencia ${Math.min(state.session.index+1,state.session.queue.length)} de ${state.session.queue.length}</p></div><button class="btn" data-action="resume">Continuar ${icon('arrow')}</button></div>`:''}
+      <div class="world-layout"><section class="overworld" aria-label="Mapa de misiones de Ciudad Delta"><div class="world-map-caption"><span class="map-signal"></span> EXPLORA · RESUELVE · RECUPERA</div><div class="world-scene" aria-hidden="true">${V.world(state.completed,next.id)}</div>${core().map((m,i)=>worldNode(m,i+1,next)).join('')}<div class="world-legend">${icon('compass')} Toca un edificio para entrar</div></section>
+      <aside class="quest-journal">${byteMessage(byte,all?'happy':'idle')}<section class="map-mission-dock"><div class="dock-top"><span class="dock-icon">${icon(next.icon)}</span><span class="eyebrow">${all?'EL RETO FINAL':done()?'TU SIGUIENTE DESTINO':'TU PRIMERA MISIÓN'}</span></div><h2>${esc(next.shortTitle||next.title)}</h2><p>${esc(next.description)}</p><div class="mission-reward-preview"><span>${icon('bolt')} ${availableXP?'Hasta '+availableXP+' XP nuevos':'Mejor puntuación guardada'}</span><span>${icon('star')} 3 estrellas</span></div><button class="btn wide" data-action="${state.session?'resume':'brief'}" data-id="${next.id}">${state.session?'Continuar aventura':all?'Volver a jugar':'¡Vamos allá!'} ${icon('arrow')}</button><button class="text-btn" data-action="how">Cómo se juega</button></section>
+      <div class="journal-objectives"><h3>${icon('shield')} Tu misión</h3><p>Clasifica pistas, repara datos y reconstruye el informe. Cada zona se ilumina cuando la recuperas.</p><div class="progress-track"><div class="progress-fill" style="width:${done()/5*100}%"></div></div><small>${done()} de 5 zonas recuperadas</small></div>
+      ${pending?`<button class="review-route" data-action="review">${icon('repeat')}<span><strong>Te esperan ${pending} evidencias</strong><small>Vuelve a intentarlo con lo aprendido</small></span>${icon('arrow')}</button>`:''}
+      ${E.missions.filter(m=>m.extra).map(m=>`<button class="bonus-dock" data-action="brief" data-id="${m.id}"><span>${icon('code')}</span><span><small>EXPEDICIÓN EXTRA</small><strong>Laboratorio de POO y Regex</strong><em>${state.completed[m.id]?'Completado · Volver a jugar':'Disponible desde el principio'}</em></span>${icon('arrow')}</button>`).join('')}</aside></div><p class="footer-note">Estudia jugando · Teoría, preguntas y ejercicios · Sin Python inicial</p></div>`;
   }
   function missionCard(m,n,recommended,extra=''){
     const complete=state.completed[m.id],locked=!unlocked(m);
@@ -105,9 +117,9 @@
   }
   function showBrief(id){
     const m=mission(id);if(!m)return;
-    if(!unlocked(m)){toast('Recupera Archivo, Estación, Oficina y Observatorio para abrir el informe final.');return;}
+    if(!unlocked(m)){toast('Recupera Archivo, Estación, Torre y Observatorio para abrir la auditoría final.');return;}
     page='briefing';updateChrome();
-    main.innerHTML=`<div class="briefing"><button class="text-btn back" data-action="nav" data-page="map">${icon('back')} Volver al mapa</button><div class="panel"><div class="big-icon">${icon(m.icon)}</div><span class="eyebrow">${m.extra?'CONTENIDO ADICIONAL':'ANTES DE JUGAR · LO ESENCIAL'}</span><h1>${esc(m.title)}</h1><p class="briefing-intro">${esc(m.description)}</p>${m.briefing.map((r,i)=>`<div class="rule"><span class="rule-num">${i+1}</span><p>${esc(r)}</p></div>`).join('')}<div class="helper-strip">${icon('shield')}<p><strong>Tu objetivo:</strong> ${esc(m.repair)}. Resuelve todos los ejercicios; si uno se resiste, tienes pistas y recuperación.</p></div><button class="btn wide start" data-action="start-mission" data-id="${m.id}">Entrar en la misión ${icon('arrow')}</button><p class="footer-note">Las variantes nuevas se marcan como práctica. Los cuartiles siguen la convención indicada en cada reto.</p></div></div>`;
+    main.innerHTML=`<div class="briefing scene-enter"><button class="text-btn back" data-action="nav" data-page="map">${icon('back')} Volver al mapa</button><div class="brief-scene mission-scene" aria-hidden="true">${V.missionScene(id,state.completed[id]?'solved':'idle')}</div><div class="panel briefing-panel"><span class="eyebrow">${m.extra?'EXPEDICIÓN EXTRA':'MISIÓN '+(core().findIndex(x=>x.id===id)+1)+' · PREPARA TU EQUIPO'}</span><h1>${esc(m.title)}</h1><p class="briefing-intro">${esc(m.description)}</p>${byteMessage('Antes de entrar, estas dos ideas son nuestras herramientas. Luego toca ponerlas en práctica.','thinking')}<div class="mission-rules">${m.briefing.map((r,i)=>`<div class="rule"><span class="rule-num">${i+1}</span><p>${esc(r)}</p></div>`).join('')}</div><div class="helper-strip">${icon('shield')}<p><strong>Objetivo:</strong> ${esc(m.repair)}.</p></div><div class="mission-reward-preview"><span>${icon('bolt')} ${id==='auditoria'?6:5} evidencias</span><span>${icon('star')} Hasta 3 estrellas</span><span>${icon('heart')} Reintentos libres</span></div><button class="btn wide start" data-action="start-mission" data-id="${m.id}">¡Entrar en la misión! ${icon('arrow')}</button><p class="footer-note">Tendrás pistas y explicaciones si te atascas. Puedes pausar cuando quieras.</p></div></div>`;
     window.scrollTo({top:0,behavior:'instant'});main.focus({preventScroll:true});
   }
   function makeSeed(){state.sequence++;return (Date.now()+state.sequence*137)%2147483647;}
@@ -128,16 +140,80 @@
   function lockedAnswer(){const s=state.session;return !s||!!s.results[s.index]||s.showSolution;}
   function typeLabel(t){return {sort:'Clasifica las evidencias',order:'Reconstruye el orden',fields:'Repara y calcula',match:'Une las piezas',pick:'Audita la decisión',box:'Reconstruye el boxplot'}[t]||'Resuelve el reto';}
   function progressGame(){const s=state.session;return Object.keys(s.results).length/s.queue.length*100;}
+  function byteLine(c,s,result){
+    if(result)return s.feedback?.title||'¡Evidencia recuperada! Un paso más cerca de recuperar la ciudad.';
+    if(s.showSolution)return 'Miremos cómo funciona. Después podrás reconstruirlo tú.';
+    if(s.feedback?.kind==='retry')return 'Casi. Revisa las partes señaladas: la explicación nos da la siguiente pista.';
+    if(s.feedback?.kind==='info')return 'Nos falta alguna pieza. Completa el tablero y lo comprobamos.';
+    if(s.hints[s.index])return 'He dejado una pista debajo del tablero. ¡Tú puedes construir la respuesta!';
+    return {sort:'Cada evidencia tiene su sitio. Elige una ficha y toca el destino que le corresponde.',order:'Vamos a reconstruir la secuencia. Toca las piezas en el orden correcto.',match:'¡Conecta las pistas! Elige una tarjeta de cada lado para formar una pareja.',fields:'La ciudad necesita tus cálculos. Usa los datos del reto para reparar cada campo.',pick:'Nos toca investigar. Lee las evidencias y elige la decisión que se sostiene.',box:'Dale forma a los datos: al introducir tus valores verás cómo se construye el gráfico.'}[c.type];
+  }
   function renderGame(){
     const s=state.session;if(!s){navigate('map');return;}
     const item=current();if(!item){finishSession();return;}const c=item.challenge,a=answer(),result=s.results[s.index];
-    main.innerHTML=`<div class="game-shell"><div class="game-top"><button class="icon-btn" data-action="nav" data-page="map" aria-label="Guardar y volver al mapa">${icon('back')}</button><div class="game-track"><div class="row spread"><span>${esc(s.title)}</span><strong>${s.index+1}/${s.queue.length}</strong></div><div class="progress-track" role="progressbar" aria-label="Progreso de la partida" aria-valuemin="0" aria-valuemax="${s.queue.length}" aria-valuenow="${Object.keys(s.results).length}"><div class="progress-fill" style="width:${progressGame()}%"></div></div></div><div class="game-status"><span class="combo">${s.combo>=2?'Racha ×'+s.combo:icon('bolt')}</span><button class="icon-btn" data-action="focus" aria-label="${state.settings.focus?'Salir del':'Activar'} modo concentración">${icon('focus')}</button></div></div>
-      <article class="challenge-card ${s.feedback?.kind==='success'?'soft-in':''}"><div class="row spread wrap"><span class="eyebrow">${item.recovery?'REVANCHA · RECUPERA LA EVIDENCIA':typeLabel(c.type)}</span><span class="challenge-source">${esc(c.source||'Práctica')}</span></div><h1>${esc(c.title)}</h1><p class="challenge-prompt">${esc(c.prompt)}</p>${c.context?`<div class="audit-context">${esc(c.context)}</div>`:''}${c.data&&!Array.isArray(c.data)?renderData(c.data):''}<div class="challenge-board">${renderBoard(c,a)}</div>
+    const chapter=mission(item.origin),phase=result?'solved':'idle',mood=result?'happy':s.feedback||s.hints[s.index]?'thinking':'idle';
+    const renderKey=s.startedAt+':'+s.index,enter=renderKey!==stageKey;stageKey=renderKey;
+    const ready=!result&&!s.showSolution&&E.grade(c,a).complete;
+    main.innerHTML=`<div class="game-shell game-play ${enter?'scene-enter':''}" data-mission="${item.origin}"><div class="game-top game-hud"><button class="icon-btn" data-action="nav" data-page="map" aria-label="Guardar y volver al mapa">${icon('back')}</button><div class="game-track"><span class="chapter-label">${s.mode==='mission'?(chapter?.extra?'TALLER EXTRA':'MISIÓN '+(core().findIndex(m=>m.id===item.origin)+1)):s.mode==='review'?'RECUPERA LAS EVIDENCIAS':'PARTIDA RÁPIDA'}</span><div class="row spread"><span>${esc(chapter?.shortTitle||s.title)}</span><strong class="hud-counter">${s.index+1}/${s.queue.length}</strong></div><div class="progress-track" role="progressbar" aria-label="Evidencias recuperadas" aria-valuemin="0" aria-valuemax="${s.queue.length}" aria-valuenow="${Object.keys(s.results).length}"><div class="progress-fill" style="width:${progressGame()}%"></div></div></div><div class="game-status"><span class="combo ${s.combo>=2?'combo-active':''}">${s.combo>=2?'×'+s.combo:icon('bolt')}</span><button class="icon-btn" data-action="focus" aria-label="${state.settings.focus?'Salir del':'Activar'} modo concentración" aria-pressed="${!!state.settings.focus}">${icon('focus')}</button></div></div>
+      <div class="mission-scene ${result?'scene-solved':''}" aria-hidden="true" style="--art-phase:-${(Date.now()-animationEpoch)%6000}ms">${V.missionScene(item.origin,phase)}</div><div class="evidence-bar"><span>${icon('shield')} Evidencias</span><div class="evidence-slots" aria-label="${Object.keys(s.results).length} de ${s.queue.length} evidencias recuperadas">${s.queue.map((q,i)=>`<span class="evidence-slot ${s.results[i]?'filled':''} ${i===s.index?'current':''}" aria-hidden="true">${s.results[i]?icon('check'):q.recovery?icon('repeat'):'◆'}</span>`).join('')}</div><strong>+${s.award} XP</strong></div>
+      ${byteMessage(byteLine(c,s,result),mood)}
+      <article class="challenge-card ${result?'challenge-solved':''}" data-challenge="${esc(c.id)}"><div class="row spread wrap"><span class="eyebrow">${item.recovery?'REVANCHA · RECUPERA LA EVIDENCIA':typeLabel(c.type)}</span><span class="challenge-source">${esc(c.source||'Práctica')}</span></div><h1>${esc(c.title)}</h1><p class="challenge-prompt">${esc(c.prompt)}</p>${c.context?`<div class="audit-context">${esc(c.context)}</div>`:''}${c.data&&!Array.isArray(c.data)?renderData(c.data):''}<div class="challenge-board">${renderBoard(c,a)}</div>
       ${s.hints[s.index]?`<aside class="hint-box"><strong>Pista:</strong> ${esc(c.hint)}</aside>`:''}
       ${s.showSolution?`<div class="feedback"><div class="feedback-title">${icon('book')} Solución explicada</div><p>${esc(c.explanation)}</p>${solutionView(c)}<p class="small muted">Ahora vuelve a construirla. Se registrará como resuelta con ayuda.</p><button class="btn" data-action="retry-solution">Resolver de nuevo ${icon('repeat')}</button></div>`:
       s.feedback?feedbackView(c,s.feedback,result):''}
-      ${!result&&!s.showSolution?`<div class="game-actions"><button class="text-btn" data-action="hint">${icon('bulb')}${s.hints[s.index]?'Recordar pista':'Necesito una pista'}</button><button class="btn" data-action="check">Comprobar ${icon('check')}</button></div>${(s.attempts[s.index]||0)>=2?`<button class="text-btn" data-action="solution">Ver solución y volver a practicar</button>`:''}`:''}
-      </article><p class="game-footnote">${s.pending.length&&!s.recoveryAdded?`${s.pending.length} evidencias tendrán una revancha al terminar este tramo.<br>`:''}${iconSmallSave()} Partida guardada automáticamente · Puedes parar en cualquier momento.</p></div>`;
+      ${!result&&!s.showSolution?`<div class="game-actions"><button class="text-btn" data-action="hint">${icon('bulb')}${s.hints[s.index]?'Recordar pista':'Necesito una pista'}</button><button class="btn ${ready?'answer-ready':''}" data-action="check">Comprobar ${icon('check')}</button></div>${(s.attempts[s.index]||0)>=2?`<button class="text-btn" data-action="solution">Ver solución y volver a practicar</button>`:''}`:''}
+      </article><p class="game-footnote">${s.pending.length&&!s.recoveryAdded?`${s.pending.length} evidencias tendrán una revancha al terminar este tramo.<br>`:''}${iconSmallSave()} Partida guardada · Puedes parar cuando quieras.</p></div>`;
+    if(s.feedback?.kind==='retry')highlightWrong(c,s.feedback.wrong||[]);
+  }
+  function control(action,key,value){
+    const safe=String(value).replace(/\\/g,'\\\\').replace(/"/g,'\\"');
+    return $(`[data-action="${action}"][data-${key}="${safe}"]`);
+  }
+  function animateElement(el,keyframes,options={}){
+    if(!el||!motionAllowed()||typeof el.animate!=='function')return;
+    const animation=el.animate(keyframes,{duration:260,easing:'cubic-bezier(.2,.8,.2,1)',...options});
+    animation.finished?.catch(()=>{});
+  }
+  function pieceOrigin(el){
+    if(!el||!motionAllowed())return null;
+    const r=el.getBoundingClientRect();return {x:r.left+r.width/2,y:r.top+r.height/2};
+  }
+  function movePiece(from,target){
+    if(!target)return;
+    if(!from){animateElement(target,[{transform:'scale(.94)'},{transform:'scale(1.04)',offset:.65},{transform:'scale(1)'}]);return;}
+    const r=target.getBoundingClientRect(),dx=from.x-r.left-r.width/2,dy=from.y-r.top-r.height/2;
+    animateElement(target,[{transform:`translate(${dx}px,${dy}px) scale(.92)`,opacity:.65},{transform:'translate(0,0) scale(1.07)',opacity:1,offset:.78},{transform:'translate(0,0) scale(1)'}],{duration:300});
+  }
+  function highlightWrong(c,wrong){
+    for(const id of wrong){
+      let el;
+      if(c.type==='sort')el=control('sort-remove','id',id);
+      if(c.type==='order')el=control('order-remove','id',(answer().order||[])[Number(id)]);
+      if(c.type==='match')el=control('match-select','id',id);
+      if(c.type==='pick')el=control('pick','value',id);
+      if(c.type==='fields')el=$('#field-'+id)?.closest('.field-row');
+      if(c.type==='box')el=$('#box-'+id)?.closest('label');
+      el?.classList.add('needs-review');
+      el?.setAttribute('data-review','Revisar');
+    }
+  }
+  function answerEffects(correct,gain=0){
+    const face=$('.byte-portrait'),feedback=$('.feedback');
+    animateElement(face,correct?[{transform:'translateY(0) rotate(-5deg)'},{transform:'translateY(-12px) rotate(6deg)',offset:.45},{transform:'translateY(0) rotate(0)'}]:[{transform:'rotate(0)'},{transform:'rotate(-7deg)',offset:.45},{transform:'rotate(0)'}],{duration:correct?480:320});
+    animateElement(feedback,[{transform:'translateY(8px)',opacity:.6},{transform:'translateY(0)',opacity:1}],{duration:240});
+    if(correct){
+      $('.challenge-card')?.classList.add('pulse-success');
+      animateElement($('.evidence-slot.current'),[{transform:'scale(.5)',opacity:.3},{transform:'scale(1.3)',offset:.6},{transform:'scale(1)',opacity:1}],{duration:430});
+      if(state.session.combo>=2)animateElement($('.combo'),[{transform:'scale(.75)'},{transform:'scale(1.2)',offset:.65},{transform:'scale(1)'}]);
+      if(gain>0&&motionAllowed()){
+        const burst=document.createElement('span');burst.className='xp-burst';burst.textContent='+'+gain+' XP';burst.setAttribute('aria-hidden','true');feedback?.append(burst);setTimeout(()=>burst.remove(),1400);
+        animateElement($('#header-xp'),[{transform:'scale(1)'},{transform:'scale(1.12)',offset:.5},{transform:'scale(1)'}],{duration:400});
+      }
+    }else document.querySelectorAll('.needs-review').forEach(el=>animateElement(el,[{transform:'translateX(0)'},{transform:'translateX(-3px)',offset:.25},{transform:'translateX(3px)',offset:.6},{transform:'translateX(0)'}],{duration:240}));
+  }
+  function updateReady(){
+    const s=state.session;if(!s||lockedAnswer())return;
+    $('[data-action="check"]')?.classList.toggle('answer-ready',E.grade(current().challenge,answer()).complete);
   }
   function iconSmallSave(){return '✓';}
   function renderData(data){return `<div class="table-scroll" tabindex="0" aria-label="Datos del ejercicio"><table class="data-table"><thead><tr>${data.headers.map(h=>`<th scope="col">${esc(h)}</th>`).join('')}</tr></thead><tbody>${data.rows.map(row=>`<tr>${row.map(v=>`<td>${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;}
@@ -202,11 +278,11 @@
     const item=current(),c=item.challenge,g=E.grade(c,answer());
     if(!g.complete){s.feedback={kind:'info',title:'Todavía falta una pieza',text:g.feedback||'Completa todos los campos antes de comprobar.'};save();renderGame();scrollFeedback();return;}
     s.attempts[s.index]=(s.attempts[s.index]||0)+1;
-    const key=item.origin+':'+item.slot;
+    const key=item.origin+':'+item.slot;let earnedNow=0;
     if(g.correct){
       const help=!!s.hints[s.index]||!!s.solutions[s.index],first=s.attempts[s.index]===1&&!help;
       s.results[s.index]={correct:true,first,help,attempts:s.attempts[s.index]};s.combo=first?s.combo+1:0;s.maxCombo=Math.max(s.combo,s.maxCombo);
-      const reward=first?20:help?8:12,prior=state.earned[key]||0,gain=Math.max(0,reward-prior);state.earned[key]=Math.max(prior,reward);s.award+=gain;
+      const reward=first?20:help?8:12,prior=state.earned[key]||0,gain=Math.max(0,reward-prior);state.earned[key]=Math.max(prior,reward);s.award+=gain;earnedNow=gain;
       if(item.recovery||s.mode==='review'){if(state.errors[key])state.errors[key].resolved=true;}
       s.feedback={kind:'success',title:help?'Evidencia resuelta con ayuda':item.recovery?'¡Evidencia recuperada!':first?'¡Evidencia recuperada a la primera!':'¡Ahora sí! Has reparado la evidencia',text:c.explanation+(gain?` +${gain} XP.`:''),details:g.details};
       tone('correct');
@@ -215,9 +291,9 @@
       if(!item.recovery&&!s.pending.some(p=>p.origin===item.origin&&p.slot===item.slot))s.pending.push({origin:item.origin,slot:item.slot});
       s.feedback={kind:'retry',title:'Hay una pista que no encaja',text:g.feedback||'Revisa la corrección por partes. Puedes corregirlas y volver a comprobar.',wrong:g.wrong,details:g.details};tone('retry');
     }
-    save();updateChrome();renderGame();scrollFeedback();
+    save();updateChrome();renderGame();answerEffects(g.correct,earnedNow);scrollFeedback();
   }
-  function scrollFeedback(){requestAnimationFrame(()=>{const f=$('.feedback');if(f){const rect=f.getBoundingClientRect();if(rect.bottom>innerHeight-115)f.scrollIntoView({behavior:reduced?'instant':'smooth',block:'center'});}});}
+  function scrollFeedback(){requestAnimationFrame(()=>{const f=$('.feedback');if(f){const rect=f.getBoundingClientRect();if(rect.bottom>innerHeight-115)f.scrollIntoView({behavior:motionAllowed()?'smooth':'instant',block:'center'});}});}
   function nextChallenge(){
     const s=state.session;if(!s?.results[s.index])return;
     s.index++;s.feedback=null;s.showSolution=false;selectedChip=null;selectedMatch=null;
@@ -227,7 +303,7 @@
       toast('Revancha: vuelve a resolver los conceptos que se resistieron.');
     }
     if(s.index>=s.queue.length){finishSession();return;}
-    save();renderGame();window.scrollTo({top:0,behavior:reduced?'instant':'smooth'});
+    save();renderGame();window.scrollTo({top:0,behavior:motionAllowed()?'smooth':'instant'});
   }
   function finishSession(){
     const s=state.session;if(!s)return;
@@ -240,7 +316,7 @@
   }
   function renderResult(){
     const r=state.lastResult;if(!r){navigate('map');return;}const m=mission(r.id),next=nextMission();
-    main.innerHTML=`<div class="result"><div class="result-icon">${icon(m?.icon||'badge')}</div><span class="eyebrow">${r.mode==='mission'?'ZONA RECUPERADA':'PARTIDA COMPLETADA'}</span><h1>${esc(r.title)}</h1>${stars(r.stars)}<p>${m?esc(m.repair):'Has cerrado todas las evidencias de esta partida.'}</p><div class="result-grid"><div class="result-metric"><strong>+${r.xp}</strong><small>XP nuevos</small></div><div class="result-metric"><strong>${r.first}/${r.total}</strong><small>A la primera y sin pista</small></div><div class="result-metric"><strong>${r.recoveries}</strong><small>Revancha completada</small></div></div><div class="panel" style="text-align:left"><span class="eyebrow">TU INFORME DE PARTIDA</span><div class="report-line">${icon('shield')}<div><strong>${r.help?'Has resuelto '+r.help+' retos con ayuda.':'Has construido tus propias respuestas.'}</strong><p>Una estrella reconoce que has terminado. Dos requieren un 80 % a la primera sin ayuda; tres, todos los ejercicios.</p></div></div><div class="report-line">${icon('bolt')}<div><strong>Mejor racha: ${r.maxCombo} evidencias</strong><p>Tu mejor puntuación por reto se conserva. Las repeticiones sirven para mejorarla y practicar nuevas variantes.</p></div></div></div><div class="row wrap" style="justify-content:center;margin-top:22px"><button class="btn" data-action="brief" data-id="${next.id}">${done()===5?'Volver a la auditoría':'Siguiente misión'} ${icon('arrow')}</button><button class="btn secondary" data-action="nav" data-page="map">Ver la ciudad</button></div><button class="text-btn" data-action="replay" data-id="${r.id}" data-mode="${r.mode}">${r.mode==='mission'?'Repetir la misión':'Jugar una partida rápida'}</button></div>`;
+    main.innerHTML=`<div class="result scene-enter"><div class="reward-stage"><div class="reward-rays" aria-hidden="true"></div><div class="reward-emblem">${icon(m?.icon||'trophy')}</div><div class="reward-stars">${stars(r.stars)}</div><div class="reward-byte" aria-hidden="true">${V.mascot('happy',92)}</div></div><span class="eyebrow">${r.mode==='mission'?'¡ZONA RECUPERADA!':'¡MISIÓN CUMPLIDA!'}</span><h1>${esc(r.title)}</h1><p>${m?esc(m.repair):'Has cerrado todas las evidencias de esta partida.'}</p>${m?`<div class="mission-scene result-scene" aria-hidden="true">${V.missionScene(m.id,'solved')}</div>`:''}<div class="result-grid"><div class="result-metric"><strong>+${r.xp}</strong><small>XP nuevos</small></div><div class="result-metric"><strong>${r.first}/${r.total}</strong><small>A la primera sin pista</small></div><div class="result-metric"><strong>${r.recoveries}</strong><small>Revancha completada</small></div></div><div class="row wrap result-actions"><button class="btn" data-action="brief" data-id="${next.id}">${done()===5?'Volver a la auditoría':'Siguiente misión'} ${icon('arrow')}</button><button class="btn secondary" data-action="nav" data-page="map">Ver la ciudad</button></div><div class="panel result-report"><span class="eyebrow">TU INFORME DE PARTIDA</span><div class="report-line">${icon('shield')}<div><strong>${r.help?'Has resuelto '+r.help+' retos con ayuda.':'Has construido tus propias respuestas.'}</strong><p>Una estrella por completar; dos por acertar al menos el 80 % a la primera sin ayuda; tres por acertarlo todo.</p></div></div><div class="report-line">${icon('bolt')}<div><strong>Mejor racha: ${r.maxCombo} evidencias</strong><p>Se conserva tu mejor puntuación por reto. Repite para mejorarla y afianzar lo aprendido.</p></div></div></div><button class="text-btn" data-action="replay" data-id="${r.id}" data-mode="${r.mode}">${r.mode==='mission'?'Repetir la misión':'Jugar una partida rápida'}</button></div>`;
   }
   function shuffle(items,seed){const a=[...items];let n=(Number(seed)||1)>>>0;for(let i=a.length-1;i>0;i--){n=(n*1664525+1013904223)>>>0;const j=n%(i+1);[a[i],a[j]]=[a[j],a[i]];}return a;}
   function renderTheory(){
@@ -281,7 +357,7 @@
   }
   function renderProfile(){
     const errors=Object.values(state.errors),q=Object.values(state.quiz),correct=q.filter(q=>q.correct).length;
-    main.innerHTML=`<header class="page-head"><div class="profile-head"><span class="avatar">${icon('robot')}</span><div><span class="eyebrow">TU CARNÉ DE INVESTIGADOR</span><h1>${rank()}</h1><p>${xp()} XP · ${done()} zonas de la ciudad recuperadas</p></div></div></header><div class="profile-grid"><section class="panel"><span class="eyebrow">INSIGNIAS DE HABILIDAD</span><h2>Tu colección.</h2><div class="badge-grid">${E.missions.map(m=>`<div class="badge-item ${state.completed[m.id]?'on':''}"><span>${icon(m.icon)}</span><small>${esc(m.shortTitle||m.title)}</small>${stars(state.completed[m.id]?.stars||0)}</div>`).join('')}</div><p class="small">Cada insignia reconoce una misión completada. Las estrellas registran la precisión de tu mejor partida.</p></section><section class="panel"><span class="eyebrow">LO QUE LLEVAS APRENDIDO</span><h2>Tu progreso.</h2>${[['Teoría consultada',state.read.length,38],['Misiones completadas',Object.keys(state.completed).length,E.missions.length],['Preguntas correctas',correct,C.quizzes.length],['Errores recuperados',errors.filter(e=>e.resolved).length,errors.length]].map(([label,n,total])=>`<div class="skill-row"><div class="row spread"><span>${label}</span><strong>${n}/${total}</strong></div><div class="progress-track"><div class="progress-fill" style="width:${total?n/total*100:0}%"></div></div></div>`).join('')}${state.legacy?.missions?`<p class="tiny muted">Se conserva el recuerdo de ${state.legacy.missions} misiones de la edición anterior. Esta campaña tiene retos nuevos.</p>`:''}</section><section class="panel"><span class="eyebrow">A TU MANERA</span><h2>Ajustes y partida.</h2><div class="settings-row"><div>Aspecto<small>Claro u oscuro, guardado en este dispositivo</small></div><button class="icon-btn" data-action="theme" aria-label="Cambiar tema">${icon(document.documentElement.dataset.theme==='dark'?'sun':'moon')}</button></div><div class="settings-row"><div>Sonidos de respuesta<small>${state.settings.sound?'Activados':'Desactivados'}</small></div><button class="icon-btn" data-action="sound" aria-label="Cambiar sonidos" aria-pressed="${state.settings.sound}">${icon(state.settings.sound?'sound':'mute')}</button></div><div class="settings-row"><div>Copia de tu progreso<small>Para conservarlo o llevarlo a otro navegador</small></div></div><div class="row wrap"><button class="btn secondary" data-action="export">${icon('download')} Guardar copia</button><button class="btn ghost" data-action="import">${icon('upload')} Restaurar</button></div><input id="backup-input" type="file" accept="application/json,.json" hidden><div class="settings-row" style="margin-top:20px"><div>Empezar desde cero<small>Borra el progreso de esta edición</small></div><button class="text-btn" data-action="reset">Reiniciar</button></div></section><section class="panel about"><span class="eyebrow">GUÍA RÁPIDA</span><h2>Tu academia de bolsillo.</h2><h3>Instalación en iPhone</h3><p>Abre la dirección de tu app en Safari y usa Compartir → Añadir a pantalla de inicio. Abre la app una vez con conexión para preparar el contenido sin conexión.</p><h3>Contenido y corrección</h3><p>${esc(C.sourcesNote)}</p><p>Se excluye Python inicial. POO y Regex aparecen como taller adicional. Los ejercicios escritos usan revisión personal, separada de la puntuación comprobada.</p><h3>Partida local</h3><p>Tu progreso se guarda en este navegador. No se sincroniza automáticamente con otros dispositivos; puedes exportarlo e importarlo.</p><p id="offline-state" class="offline-pill">${offlineMessage()}</p></section></div>`;
+    main.innerHTML=`<header class="page-head"><div class="profile-head"><span class="avatar avatar-byte" aria-hidden="true">${V.mascot('happy',88)}</span><div><span class="eyebrow">TU CARNÉ DE INVESTIGADOR</span><h1>${rank()}</h1><p>${xp()} XP · ${done()} zonas de la ciudad recuperadas</p></div></div></header><div class="profile-grid"><section class="panel"><span class="eyebrow">INSIGNIAS DE HABILIDAD</span><h2>Tu colección.</h2><div class="badge-grid">${E.missions.map(m=>`<div class="badge-item ${state.completed[m.id]?'on':''}"><span>${icon(m.icon)}</span><small>${esc(m.shortTitle||m.title)}</small>${stars(state.completed[m.id]?.stars||0)}</div>`).join('')}</div><p class="small">Cada insignia reconoce una misión completada. Las estrellas registran la precisión de tu mejor partida.</p></section><section class="panel"><span class="eyebrow">LO QUE LLEVAS APRENDIDO</span><h2>Tu progreso.</h2>${[['Teoría consultada',state.read.length,38],['Misiones completadas',Object.keys(state.completed).length,E.missions.length],['Preguntas correctas',correct,C.quizzes.length],['Errores recuperados',errors.filter(e=>e.resolved).length,errors.length]].map(([label,n,total])=>`<div class="skill-row"><div class="row spread"><span>${label}</span><strong>${n}/${total}</strong></div><div class="progress-track"><div class="progress-fill" style="width:${total?n/total*100:0}%"></div></div></div>`).join('')}${state.legacy?.missions?`<p class="tiny muted">Se conserva el recuerdo de ${state.legacy.missions} misiones de la edición anterior. Esta campaña tiene retos nuevos.</p>`:''}</section><section class="panel"><span class="eyebrow">A TU MANERA</span><h2>Ajustes y partida.</h2><div class="settings-row"><div>Aspecto<small>Claro u oscuro, guardado en este dispositivo</small></div><button class="icon-btn" data-action="theme" aria-label="Cambiar tema">${icon(document.documentElement.dataset.theme==='dark'?'sun':'moon')}</button></div><div class="settings-row"><div>Sonidos de respuesta<small>${state.settings.sound?'Activados':'Desactivados'}</small></div><button class="icon-btn" data-action="sound" aria-label="Cambiar sonidos" aria-pressed="${state.settings.sound}">${icon(state.settings.sound?'sound':'mute')}</button></div><div class="settings-row"><div>Animaciones<small>${!motionAllowed()?'Movimiento reducido': 'Personajes, fichas y recompensas animadas'}${motionQuery.matches?' · Preferencia del dispositivo':''}</small></div><button class="icon-btn" data-action="motion" aria-label="${state.settings.motion===false?'Activar animaciones':'Reducir animaciones'}" aria-pressed="${state.settings.motion!==false}">${icon(state.settings.motion===false?'focus':'bolt')}</button></div><div class="settings-row"><div>Copia de tu progreso<small>Para conservarlo o llevarlo a otro navegador</small></div></div><div class="row wrap"><button class="btn secondary" data-action="export">${icon('download')} Guardar copia</button><button class="btn ghost" data-action="import">${icon('upload')} Restaurar</button></div><input id="backup-input" type="file" accept="application/json,.json" hidden><div class="settings-row" style="margin-top:20px"><div>Empezar desde cero<small>Borra el progreso de esta edición</small></div><button class="text-btn" data-action="reset">Reiniciar</button></div></section><section class="panel about"><span class="eyebrow">GUÍA RÁPIDA</span><h2>Tu academia de bolsillo.</h2><h3>Instalación en iPhone</h3><p>Abre la dirección de tu app en Safari y usa Compartir → Añadir a pantalla de inicio. Abre la app una vez con conexión para preparar el contenido sin conexión.</p><h3>Contenido y corrección</h3><p>${esc(C.sourcesNote)}</p><p>Se excluye Python inicial. POO y Regex aparecen como taller adicional. Los ejercicios escritos usan revisión personal, separada de la puntuación comprobada.</p><h3>Partida local</h3><p>Tu progreso se guarda en este navegador. No se sincroniza automáticamente con otros dispositivos; puedes exportarlo e importarlo.</p><p id="offline-state" class="offline-pill">${offlineMessage()}</p></section></div>`;
   }
   function offlineMessage(){return navigator.serviceWorker?.controller?'Contenido preparado para usar sin conexión.':'El contenido sin conexión se prepara al abrir la app desde HTTPS o localhost.';}
   function openModal(title,description,actions){
@@ -292,10 +368,10 @@
   function tone(kind){
     if(!state.settings.sound)return;try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();const notes=kind==='finish'?[523,659,784]:kind==='correct'?[587,784]:[294];notes.forEach((freq,i)=>{const o=audioCtx.createOscillator(),g=audioCtx.createGain(),t=audioCtx.currentTime+i*.09;o.type='sine';o.frequency.value=freq;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.035,t+.015);g.gain.exponentialRampToValueAtTime(.001,t+.14);o.connect(g);g.connect(audioCtx.destination);o.start(t);o.stop(t+.15);});}catch(_){}
   }
-  function celebrate(){if(reduced)return;const colors=['#8ce2c5','#f3cb77','#baaceb','#8bbfd7'];$('#celebration').innerHTML=Array.from({length:30},(_,i)=>`<i class="confetti-piece" style="--x:${20+(i*17)%60}%;--size:${7+i%8}px;--c:${colors[i%4]};--dx:${(i%2?-1:1)*(25+i*7)}px;--d:${i%5*.04}s"></i>`).join('');setTimeout(()=>$('#celebration').innerHTML='',2000);}
+  function celebrate(){if(!motionAllowed())return;const colors=['#8ce2c5','#f3cb77','#baaceb','#8bbfd7'];$('#celebration').innerHTML=Array.from({length:30},(_,i)=>`<i class="confetti-piece" style="--x:${20+(i*17)%60}%;--size:${7+i%8}px;--c:${colors[i%4]};--dx:${(i%2?-1:1)*(25+i*7)}px;--d:${i%5*.04}s"></i>`).join('');setTimeout(()=>$('#celebration').innerHTML='',2000);}
   function toggleTheme(){const theme=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=theme;try{localStorage.setItem('eda_theme',theme);}catch(_){}updateChrome();if(page==='profile')renderProfile();}
   function exportBackup(){const data={app:'EDA Quest Ciudad Delta',version:8,exportedAt:new Date().toISOString(),state};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='eda-quest-progreso.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);toast('Copia preparada. Consérvala para restaurar tu progreso.');}
-  function importBackup(file){if(!file)return;if(file.size>2e6){toast('La copia es demasiado grande.');return;}const r=new FileReader();r.onload=()=>{try{const data=JSON.parse(r.result),v=data.state;if(data.version!==8||!v||v.version!==8||!Array.isArray(v.read)||!v.completed||!v.earned||!v.errors||!v.quiz||!v.settings)throw Error('formato');const next=fresh();next.read=v.read.filter(id=>C.topics.some(t=>t.lessons.some(l=>l.id===id)));for(const m of E.missions){const saved=v.completed[m.id];if(saved&&Number.isInteger(saved.stars)&&saved.stars>=1&&saved.stars<=3)next.completed[m.id]={stars:saved.stars,bestFirst:Number(saved.bestFirst)||0,total:Number(saved.total)||5,completedAt:Number(saved.completedAt)||Date.now()};}for(const [k,val] of Object.entries(v.earned)){if(/^(variables|autobuses|esperas|graficos|auditoria|codigo):\d+$/.test(k)&&Number.isFinite(val)&&val>=0&&val<=20)next.earned[k]=val;}for(const q of C.quizzes){const saved=v.quiz[q.id];if(saved&&Number.isInteger(saved.answer)&&saved.answer>=0&&saved.answer<q.options.length)next.quiz[q.id]={answer:saved.answer,correct:saved.answer===q.answer,attempts:Number(saved.attempts)||1};}for(const w of C.written){if(typeof v.drafts?.[w.id]==='string')next.drafts[w.id]=v.drafts[w.id].slice(0,50000);if(Array.isArray(v.writtenReview?.[w.id]))next.writtenReview[w.id]=v.writtenReview[w.id].filter(i=>Number.isInteger(i)&&i>=0&&i<w.criteria.length);}for(const [k,e] of Object.entries(v.errors)){if(mission(e.origin)&&Number.isInteger(e.slot)&&e.slot>=0&&e.slot<10&&k===e.origin+':'+e.slot){const ch=E.makeMission(e.origin,1)[e.slot];if(ch)next.errors[k]={key:k,origin:e.origin,slot:e.slot,challenge:ch,resolved:!!e.resolved};}}next.settings={sound:!!v.settings.sound,focus:!!v.settings.focus};next.sequence=Number(v.sequence)||0;
+  function importBackup(file){if(!file)return;if(file.size>2e6){toast('La copia es demasiado grande.');return;}const r=new FileReader();r.onload=()=>{try{const data=JSON.parse(r.result),v=data.state;if(data.version!==8||!v||v.version!==8||!Array.isArray(v.read)||!v.completed||!v.earned||!v.errors||!v.quiz||!v.settings)throw Error('formato');const next=fresh();next.read=v.read.filter(id=>C.topics.some(t=>t.lessons.some(l=>l.id===id)));for(const m of E.missions){const saved=v.completed[m.id];if(saved&&Number.isInteger(saved.stars)&&saved.stars>=1&&saved.stars<=3)next.completed[m.id]={stars:saved.stars,bestFirst:Number(saved.bestFirst)||0,total:Number(saved.total)||5,completedAt:Number(saved.completedAt)||Date.now()};}for(const [k,val] of Object.entries(v.earned)){if(/^(variables|autobuses|esperas|graficos|auditoria|codigo):\d+$/.test(k)&&Number.isFinite(val)&&val>=0&&val<=20)next.earned[k]=val;}for(const q of C.quizzes){const saved=v.quiz[q.id];if(saved&&Number.isInteger(saved.answer)&&saved.answer>=0&&saved.answer<q.options.length)next.quiz[q.id]={answer:saved.answer,correct:saved.answer===q.answer,attempts:Number(saved.attempts)||1};}for(const w of C.written){if(typeof v.drafts?.[w.id]==='string')next.drafts[w.id]=v.drafts[w.id].slice(0,50000);if(Array.isArray(v.writtenReview?.[w.id]))next.writtenReview[w.id]=v.writtenReview[w.id].filter(i=>Number.isInteger(i)&&i>=0&&i<w.criteria.length);}for(const [k,e] of Object.entries(v.errors)){if(mission(e.origin)&&Number.isInteger(e.slot)&&e.slot>=0&&e.slot<10&&k===e.origin+':'+e.slot){const ch=E.makeMission(e.origin,1)[e.slot];if(ch)next.errors[k]={key:k,origin:e.origin,slot:e.slot,challenge:ch,resolved:!!e.resolved};}}next.settings={sound:!!v.settings.sound,focus:!!v.settings.focus,motion:v.settings.motion!==false};next.sequence=Number(v.sequence)||0;
       openModal('Restaurar esta copia','Se sustituirá el progreso guardado en este navegador. La copia conserva tus misiones, preguntas, teoría y borradores; las partidas en curso se reinician.',[{label:'Restaurar progreso',action:()=>{state=next;save();navigate('profile');toast('Progreso restaurado.');}},{label:'Cancelar',action:()=>{},secondary:true}]);
     }catch(_){toast('No es una copia válida de EDA Quest Ciudad Delta.');}};r.readAsText(file);}
   document.addEventListener('click',event=>{
@@ -303,6 +379,7 @@
     if(act==='nav'){navigate(b.dataset.page);return;}
     if(act==='theme'){toggleTheme();return;}
     if(act==='sound'){state.settings.sound=!state.settings.sound;save();updateChrome();if(state.settings.sound)tone('correct');if(page==='profile')renderProfile();return;}
+    if(act==='motion'){state.settings.motion=state.settings.motion===false;save();updateChrome();renderProfile();return;}
     if(act==='how'){how();return;}
     if(act==='brief'){showBrief(id);return;}
     if(act==='start-mission'){requestStart('mission',id);return;}
@@ -310,7 +387,7 @@
     if(act==='quick'){requestStart('quick','quick');return;}
     if(act==='review'){if(Object.values(state.errors).some(e=>!e.resolved))requestStart('review','review');else navigate('profile');return;}
     if(act==='replay'){requestStart(b.dataset.mode==='mission'?'mission':'quick',id);return;}
-    if(act==='focus'){state.settings.focus=!state.settings.focus;save();updateChrome();return;}
+    if(act==='focus'){state.settings.focus=!state.settings.focus;save();updateChrome();b.setAttribute('aria-pressed',String(state.settings.focus));b.setAttribute('aria-label',(state.settings.focus?'Salir del':'Activar')+' modo concentración');return;}
     if(act==='close-modal'){closeModal();return;}
     if(act==='modal-choice'){const fn=modalAction?.[+value]?.action;closeModal();fn?.();return;}
     if(act==='filter'){theoryFilter=id;renderTheory();return;}
@@ -329,10 +406,12 @@
     if(act==='check'){checkChallenge();return;}
     if(act==='next'){nextChallenge();return;}
     const s=state.session;if(!s||page!=='game')return;
-    if(act==='hint'){s.hints[s.index]=true;save();renderGame();$('.hint-box')?.scrollIntoView({block:'nearest',behavior:reduced?'instant':'smooth'});return;}
+    if(act==='hint'){s.hints[s.index]=true;save();renderGame();$('.hint-box')?.scrollIntoView({block:'nearest',behavior:motionAllowed()?'smooth':'instant'});return;}
     if(act==='solution'){s.solutions[s.index]=true;s.hints[s.index]=true;s.showSolution=true;save();renderGame();scrollFeedback();return;}
     if(act==='retry-solution'){s.showSolution=false;s.feedback=null;s.answers[s.index]={};save();renderGame();return;}
     if(lockedAnswer())return;const a=answer(),c=current().challenge;resetFeedback();
+    const movingId=act==='sort-place'?selectedChip:act==='match-place'?selectedMatch:id;
+    const from=pieceOrigin(act==='sort-place'&&selectedChip?control('sort-select','id',selectedChip):b);
     if(act==='reset-answer'){s.answers[s.index]={};selectedChip=null;selectedMatch=null;}
     else if(act==='sort-select'){selectedChip=id;}
     else if(act==='sort-place'){
@@ -348,32 +427,47 @@
     else if(act==='pick'){const n=+value;a.selected=c.correct.length>1?((a.selected||[]).includes(n)?a.selected.filter(v=>v!==n):[...(a.selected||[]),n]):[n];}
     else return;
     save();renderGame();
-    if(act==='sort-select'||act==='sort-remove')$('.bin-target')?.focus({preventScroll:true});
-    if(act==='sort-place')$('[data-action="sort-select"]')?.focus({preventScroll:true});
-    if(act==='order-add')$('[data-action="order-add"]')?.focus({preventScroll:true});
-    if(act==='match-select')$('.match-column:nth-child(2) button')?.focus({preventScroll:true});
-    if(act==='match-place')$('.match-column:first-child button:not(.paired)')?.focus({preventScroll:true});
+    let target;
+    if(act==='sort-place'&&movingId)movePiece(from,control('sort-remove','id',movingId));
+    if(act==='sort-remove')movePiece(from,control('sort-select','id',id));
+    if(act==='order-add')movePiece(from,control('order-remove','id',id));
+    if(act==='order-remove')movePiece(from,control('order-add','id',id));
+    if(act==='match-place'){
+      animateElement(control('match-select','id',movingId),[{transform:'scale(.95)'},{transform:'scale(1.04)',offset:.6},{transform:'scale(1)'}]);
+      animateElement(control('match-place','value',value),[{transform:'scale(.95)'},{transform:'scale(1.04)',offset:.6},{transform:'scale(1)'}]);
+    }
+    if(act==='pick')animateElement(control('pick','value',value),[{transform:'scale(.98)'},{transform:'scale(1)'}],{duration:150});
+    if(act==='sort-select'||act==='sort-remove')target=$('.bin-target');
+    if(act==='sort-place')target=$('[data-action="sort-select"]')||$('[data-action="check"]');
+    if(act==='order-add')target=$('[data-action="order-add"]')||$('[data-action="check"]');
+    if(act==='order-remove')target=control('order-add','id',id);
+    if(act==='match-select')target=$('.match-column:nth-child(2) button');
+    if(act==='match-place')target=$('.match-column:first-child button:not(.paired)')||$('[data-action="check"]');
+    if(act==='pick')target=control('pick','value',value);
+    if(act==='reset-answer')target=$('[data-action="sort-select"]')||$('[data-action="order-add"]')||$('[data-action="check"]');
+    target?.focus({preventScroll:true});
   });
   document.addEventListener('input',event=>{
     const el=event.target,t=el.dataset.input;
     if(t==='search'){search=el.value;$('#lesson-list').innerHTML=lessonList();return;}
     if(t==='draft'){state.drafts[writtenId]=el.value;save();const btn=$('[data-action="written-show"]');if(btn)btn.disabled=!el.value.trim();$('#draft-status').textContent='✓ Borrador guardado en este dispositivo.';return;}
-    if(t==='field'&&!lockedAnswer()){const a=answer();a.values=a.values||{};a.values[el.dataset.id]=el.value;resetFeedback();el.closest('.field-row')?.classList.remove('invalid');save();}
-    if(t==='box'&&!lockedAnswer()){const a=answer();a.positions=a.positions||{};if(el.value==='')delete a.positions[el.dataset.id];else a.positions[el.dataset.id]=el.value;resetFeedback();save();$('#boxplot-display').innerHTML=boxSVG(current().challenge,a);}
+    if(t==='field'&&!lockedAnswer()){const a=answer();a.values=a.values||{};a.values[el.dataset.id]=el.value;resetFeedback();el.closest('.field-row')?.classList.remove('invalid','needs-review');save();updateReady();}
+    if(t==='box'&&!lockedAnswer()){const a=answer();a.positions=a.positions||{};if(el.value==='')delete a.positions[el.dataset.id];else a.positions[el.dataset.id]=el.value;resetFeedback();save();$('#boxplot-display').innerHTML=boxSVG(current().challenge,a);el.closest('label')?.classList.remove('needs-review');updateReady();}
   });
   document.addEventListener('change',event=>{
     const el=event.target,t=el.dataset.input;
     if(el.id==='backup-input'){importBackup(el.files[0]);el.value='';return;}
     if(t==='written-select'){writtenId=el.value;writtenShown=false;renderWritten();return;}
     if(t==='rubric'){const list=state.writtenReview[writtenId]||[],i=+el.dataset.index;state.writtenReview[writtenId]=el.checked?[...new Set([...list,i])]:list.filter(v=>v!==i);save();return;}
-    if(t==='box'&&!lockedAnswer()){const a=answer();a.positions=a.positions||{};if(el.value==='')delete a.positions[el.dataset.id];else a.positions[el.dataset.id]=el.value;resetFeedback();save();$('#boxplot-display').innerHTML=boxSVG(current().challenge,a);}
-    if(t==='field'&&!lockedAnswer()){const a=answer();a.values=a.values||{};a.values[el.dataset.id]=el.value;resetFeedback();save();}
+    if(t==='box'&&!lockedAnswer()){const a=answer();a.positions=a.positions||{};if(el.value==='')delete a.positions[el.dataset.id];else a.positions[el.dataset.id]=el.value;resetFeedback();save();$('#boxplot-display').innerHTML=boxSVG(current().challenge,a);el.closest('label')?.classList.remove('needs-review');updateReady();}
+    if(t==='field'&&!lockedAnswer()){const a=answer();a.values=a.values||{};a.values[el.dataset.id]=el.value;resetFeedback();save();updateReady();}
   });
   document.addEventListener('keydown',event=>{
     if($('#modal-root').children.length){if(event.key==='Escape'){closeModal();return;}if(event.key==='Tab'){const list=[...document.querySelectorAll('.modal button')];const first=list[0],last=list[list.length-1];if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}}}
-    if(event.key==='Enter'&&event.target.matches('input[data-input=field]')){event.preventDefault();checkChallenge();}
+    if(event.key==='Enter'&&event.target.matches('input[data-input=field],input[data-input=box]')){event.preventDefault();checkChallenge();}
   });
   document.querySelectorAll('[data-icon]').forEach(el=>el.innerHTML=icon(el.dataset.icon));
+  motionQuery.addEventListener?.('change',()=>{updateChrome();if(page==='profile')renderProfile();});
   save();render();
   if('serviceWorker' in navigator&&(location.protocol==='https:'||['localhost','127.0.0.1'].includes(location.hostname))){navigator.serviceWorker.register('./sw.js').then(reg=>{reg.update();}).catch(()=>{});navigator.serviceWorker.addEventListener('controllerchange',()=>{if(page==='profile')renderProfile();});}
   window.addEventListener('online',()=>{if(page==='profile')renderProfile();});

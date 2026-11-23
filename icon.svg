@@ -1,1 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#101d27"/><rect x="76" y="76" width="360" height="360" rx="112" fill="#8ce2c5"/><path d="M155 348V246m101 102V190m101 158V135" stroke="#10382e" stroke-width="46" stroke-linecap="round"/><path d="m150 135 7 16 17 7-17 7-7 17-7-17-17-7 17-7Z" fill="#10382e"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none" role="img" aria-labelledby="icon-title">
+  <title id="icon-title">EDA Quest · Byte</title>
+  <defs>
+    <radialGradient id="icon-night" cx="48%" cy="42%" r="72%"><stop stop-color="#2b4163"/><stop offset=".55" stop-color="#192541"/><stop offset="1" stop-color="#11152f"/></radialGradient>
+    <linearGradient id="byte-icon-body" x1="0" y1="0" x2=".9" y2="1"><stop stop-color="#eafff8"/><stop offset=".45" stop-color="#99edce"/><stop offset="1" stop-color="#49a896"/></linearGradient>
+    <linearGradient id="byte-icon-visor" x1="0" y1="0" x2=".5" y2="1"><stop stop-color="#233a58"/><stop offset="1" stop-color="#111c37"/></linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#icon-night)"/>
+  <circle cx="256" cy="254" r="177" fill="none" stroke="#86e9d0" stroke-width="2" opacity=".1"/>
+  <circle cx="256" cy="254" r="148" fill="#74dfc6" opacity=".025"/>
+  <path d="M124 167q3 12 15 15-12 3-15 15-3-12-15-15 12-3 15-15Z" fill="#ffd277"/>
+  <path d="M385 160q2 8 10 10-8 2-10 10-2-8-10-10 8-2 10-10Z" fill="#7bdfff"/>
+  <path d="M382 364q2 7 9 9-7 2-9 9-2-7-9-9 7-2 9-9Z" fill="#72ebbb"/>
+  <g transform="translate(63.6 52.5) scale(3.7)"><ellipse cx="52" cy="99" rx="26" ry="6" fill="#020a22" opacity=".28"/><g><ellipse cx="52" cy="91" rx="18" ry="4" stroke="#72ebbb" stroke-width="2" opacity=".65"/><path d="m42 81 4 10h12l5-10" fill="#477e88"/><path d="m45 86 7 10 7-10" fill="#7bdfff" opacity=".8"/><g><path d="M25 58 15 47" stroke="#79c6b4" stroke-width="9" stroke-linecap="round"/><circle cx="14" cy="45" r="7" fill="#c9ffec"/></g><g><path d="M79 59 89 68" stroke="#4b9d96" stroke-width="9" stroke-linecap="round"/><circle cx="91" cy="69" r="7" fill="#91e7ca"/></g><path d="M30 59h44l5 15q-4 12-27 12T25 74Z" fill="url(#byte-icon-body)" stroke="#3d867e" stroke-width="1.8"/><path d="M48 75h8" stroke="#265d62" stroke-width="3" stroke-linecap="round"/><circle cx="52" cy="68" r="3" fill="#ffd277"/><path d="M52 13v12" stroke="#a5eacf" stroke-width="3"/><circle cx="52" cy="11" r="5" fill="#ffd277"/><path d="M27 28q26-14 51 0l5 31q-2 12-31 12T21 59Z" fill="url(#byte-icon-body)" stroke="#4b9a90" stroke-width="1.8"/><path d="M28 28q23-11 47 0" stroke="#eefff8" stroke-width="3" stroke-linecap="round"/><rect x="27" y="35" width="50" height="29" rx="12" fill="url(#byte-icon-visor)" stroke="#356c7b" stroke-width="1.5"/><path d="M33 40h35" stroke="#c9eeff" opacity=".13" stroke-width="3" stroke-linecap="round"/><g><path d="M35 52q5-8 10 0m13 0q5-8 10 0" fill="none" stroke="#8cefd6" stroke-width="4" stroke-linecap="round"/></g><circle cx="24" cy="48" r="4" fill="#a7f3d9"/><circle cx="80" cy="48" r="4" fill="#5cb5a2"/></g></g>
+</svg>
