@@ -1,1 +1,16 @@
-{"name":"EDA Studio · Prepara tu examen","short_name":"EDA Studio","description":"Teoría, preguntas, simulacros y casos prácticos para estudiar EDA","start_url":"./index.html","scope":"./","display":"standalone","background_color":"#f6f7fb","theme_color":"#201e53","lang":"es","icons":[{"src":"icon.png","sizes":"512x512","type":"image/png","purpose":"any maskable"},{"src":"icon.svg","sizes":"any","type":"image/svg+xml"}]}
+{
+  "id": "./",
+  "name": "EDA Quest · Ciudad Delta",
+  "short_name": "EDA Quest",
+  "description": "Recupera una ciudad resolviendo ejercicios de EDA. Teoría, misiones y repaso de errores.",
+  "lang": "es",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#101d27",
+  "theme_color": "#101d27",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+  ]
+}
