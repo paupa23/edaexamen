@@ -1,5 +1,5 @@
-const CACHE = 'eda-quest-city-v9-visual';
-const ASSETS = ['./', './index.html', './styles.css', './game.css', './visuals.js', './content.js', './challenges.js', './app.js', './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
+const CACHE = 'eda-quest-city-v10-campaign';
+const ASSETS = ['./', './index.html', './styles.css', './game.css', './polish.css', './campaign.js', './exercise-visuals.js', './visuals.js', './content.js', './challenges.js', './app.js', './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
 });

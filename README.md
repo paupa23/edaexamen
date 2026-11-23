@@ -2,7 +2,38 @@
 
 Juego de estudio en español para móvil. Aplicación estática, sin dependencias de producción, sin cuenta y sin servidor de datos. Se puede publicar en Vercel.
 
-## Edición visual: un tablero de aventura
+## Campaña secuencial y revisión de jugabilidad
+
+Las seis misiones se desbloquean en este orden:
+
+1. Archivo de variables.
+2. Taller de autobuses.
+3. Torre de las esperas.
+4. Observatorio de gráficos.
+5. Gran auditoría.
+6. Laboratorio de POO y Regex.
+
+Se exige completar todas las anteriores, incluidas sus recuperaciones; una estrella basta. Los candados están comprobados en la lógica de inicio, repetición, continuación y corrección, además de en la interfaz. Las partidas rápidas y de repaso solo utilizan zonas abiertas y no completan misiones de la campaña. La lectura de teoría y las preguntas siguen disponibles para estudiar.
+
+Tocar una misión cerrada muestra los requisitos y lleva a la siguiente misión disponible. Al terminar aparece la zona que acabas de desbloquear. Un botón Jugar/Continuar antes del mapa permite entrar sin recorrer toda la pantalla.
+
+### Ejercicios y repaso
+
+- El tablero indica cuántas piezas has colocado o campos has rellenado, sin confundir ese progreso con la corrección de la respuesta.
+- La corrección breve aparece junto al tablero. El razonamiento completo se abre cuando lo necesitas y el botón Revisar devuelve el foco a las piezas.
+- Las pistas y los conceptos relacionados se consultan sin perder tu respuesta. Consultar el concepto durante un reto cuenta como ayuda; antes de empezar puedes repasar la teoría de la zona libremente.
+- El ejercicio del histograma dibuja barras contiguas a medida que escribes las frecuencias. Distingue datos en blanco, ceros y valores inválidos, y muestra el recuento parcial sobre ocho. El dibujo representa tu construcción, no adelanta la solución.
+- Las rondas rápidas priorizan errores pendientes y objetivos resueltos con ayuda dentro de las zonas desbloqueadas.
+- Los errores pendientes se resuelven también al acertar en una repetición normal. Las rondas de repaso muestran su número real de evidencias recuperadas.
+- Tocar un destino de clasificación sin seleccionar una ficha ya no deshace una respuesta.
+
+### Guardado y comodidad
+
+Las rondas de preguntas y los simulacros se guardan al seleccionar y responder, por lo que puedes recargar y continuar. Antes de sustituir una ronda o misión en curso se pide confirmación dentro de la app. El perfil muestra el mejor resultado a la primera por zona y las evidencias que conviene repasar.
+
+Se han ampliado textos y controles móviles, reducido el preámbulo del tablero y acercado la acción principal. La ayuda usa una ventana desplazable con conceptos desplegables. Se conserva el modo claro/oscuro, el movimiento reducido y el modo concentración.
+
+## Aspecto visual: un tablero de aventura
 
 El mapa es una ciudad de islas flotantes dibujada en SVG. Cada edificio abre una misión; los lugares recuperados se iluminan y conservan sus estrellas. Byte, el compañero robot, cambia de expresión al investigar, resolver o recibir una pista.
 
@@ -26,7 +57,7 @@ Cada misión empieza con una explicación breve. Hay que resolver todos sus reto
 
 Una estrella reconoce completar la misión y sus recuperaciones; dos exigen al menos el 80 % a la primera sin ayuda; tres exigen el 100 %. La experiencia conserva la mejor recompensa por objetivo (hasta 20 XP); repetir no suma XP ilimitados. Las respuestas escritas tienen revisión personal y no inflan las estrellas.
 
-El archivo, los autobuses, las esperas y los gráficos se pueden explorar libremente. La auditoría se abre al completar las cuatro zonas. Los datos nuevos están marcados como variantes de práctica. Algunos retos cambian sus datos y otros mantienen el caso y cambian el orden de sus piezas.
+La campaña se recorre en orden y el taller de POO y Regex se abre después de la auditoría. Las misiones ya completadas se pueden repetir cuando sus requisitos están satisfechos. Los datos nuevos están marcados como variantes de práctica. Algunos retos cambian sus datos y otros mantienen el caso y cambian el orden de sus piezas.
 
 ## Publicación en Vercel
 
@@ -45,9 +76,9 @@ El modo oscuro está activado inicialmente y se cambia con el botón de la parte
 
 ## Progreso y actualizaciones
 
-El progreso se guarda en `localStorage` de este navegador y dominio. Esta actualización visual mantiene la clave y el formato de guardado de Ciudad Delta: conserva misiones, estrellas, XP, teoría, borradores, respuestas y la partida en curso. Actualiza los archivos en el mismo proyecto y dominio para conservar esos datos. Si vienes de ediciones anteriores a Ciudad Delta, se migran las lecciones, respuestas y borradores compatibles; la campaña nueva comienza con sus propios retos y se conserva una referencia a las misiones de la edición antigua.
+El progreso se guarda en `localStorage` de este navegador y dominio. Esta actualización mantiene la clave y el formato de guardado de Ciudad Delta: conserva misiones, estrellas, XP, teoría, borradores, respuestas y la partida en curso. Si una edición anterior permitía jugar fuera de orden, esos logros se conservan, pero es necesario cerrar los huecos de la ruta para acceder a las zonas posteriores. Una partida antigua con zonas todavía bloqueadas queda en espera y no se elimina automáticamente. Actualiza los archivos en el mismo proyecto y dominio para conservar esos datos. Si vienes de ediciones anteriores a Ciudad Delta, se migran las lecciones, respuestas y borradores compatibles; la campaña nueva comienza con sus propios retos y se conserva una referencia a las misiones de la edición antigua.
 
-Para trasladar los avances, abre **Perfil → Guardar copia** y después **Restaurar** en el otro navegador. Las copias incluyen misiones, teoría, preguntas y borradores. La importación reinicia la partida en curso y reconstruye las evidencias pendientes con ejercicios compatibles. Si borras los datos de Safari o cambias de dominio, necesitas esa copia para recuperarlos.
+Para trasladar los avances, abre **Perfil → Guardar copia** y después **Restaurar** en el otro navegador. Las copias incluyen misiones, teoría, preguntas y borradores. La importación reinicia las partidas y rondas de preguntas en curso y reconstruye las evidencias pendientes con ejercicios compatibles. Si borras los datos de Safari o cambias de dominio, necesitas esa copia para recuperarlos.
 
 ## Ejecutar localmente
 
@@ -64,9 +95,12 @@ Abre `http://localhost:8000`. El service worker funciona en localhost y HTTPS.
 - `index.html`: aplicación y navegación.
 - `styles.css`: base de interfaz y componentes de estudio.
 - `game.css`: aspecto del juego, mapa, HUD, fichas, animaciones y temas.
+- `polish.css`: legibilidad móvil, progreso, bloqueos, ayuda y acciones de ejercicios.
 - `visuals.js`: arte SVG original de la ciudad, seis escenarios y Byte.
 - `content.js`: teoría, preguntas y ejercicios escritos.
 - `challenges.js`: generadores de retos, datos y corrector determinista.
+- `campaign.js`: requisitos, desbloqueos y acceso a partidas guardadas.
+- `exercise-visuals.js`: construcción visual del histograma con tus respuestas.
 - `app.js`: interfaz, misiones, guardado, migración y recuperación.
 - `sw.js`: contenido sin conexión y actualización de recursos.
 - `manifest.webmanifest` e iconos: instalación en pantalla de inicio.
@@ -80,12 +114,16 @@ Los ejercicios escritos no reciben una supuesta corrección por IA: se muestran 
 
 ## Verificación de esta edición
 
-La edición previa comprobó las soluciones de los 31 retos en 100 semillas por misión (3.100 calificaciones), además de entradas vacías, cero, decimales, números repetidos y opciones incorrectas. Esta actualización no modifica el corrector ni el contenido didáctico.
+El corrector y el contenido didáctico se conservan. La edición previa comprobó las soluciones de los 31 retos en 100 semillas por misión (3.100 calificaciones), además de vacíos, ceros, decimales, números repetidos y opciones incorrectas.
 
-En esta edición visual, un arnés de eventos en Node ejecutó 47 retos con movimiento reducido y otros 47 con movimiento permitido: seis mecánicas, seis misiones, recuperación de errores, repetición, partida rápida, continuidad de la partida, temas, búsqueda, borradores, preguntas y control de XP sin duplicados. Con movimiento reducido hubo cero llamadas a la API de animación. También se verificó que la preferencia manual persiste y desactiva las animaciones en una misión completa, y que Enter comprueba campos y boxplots.
+Esta revisión ha pasado 187 comprobaciones específicas de requisitos, desbloqueo en orden, progreso antiguo, datos de logro inválidos y partidas guardadas con zonas bloqueadas.
 
-Se validaron 17 variantes de SVG, sus referencias y la unicidad de los IDs. Se rasterizó el arte para revisar visualmente mapa, escenarios, mascota e iconos. Los iconos de instalación son opacos y la mascota cabe en la zona central de recorte.
+Un arnés de eventos en Node ha completado 53 retos con movimiento reducido y otros 53 con movimiento permitido. Cubre las seis misiones y mecánicas, entradas alternativas bloqueadas, partidas rápidas sin temas futuros, recuperación de errores, puntuación sin duplicados, continuidad, temas, búsqueda, borradores y preguntas. También verifica que un destino sin selección no borra fichas, que los errores anteriores se recuperan al repetir y que el repaso cuenta sus evidencias correctamente.
 
-El navegador de prueba está bloqueado por restricciones del entorno. Estas comprobaciones no equivalen a validar la distribución CSS, los gestos o la reproducción de animaciones en Safari o en un iPhone físico. Se incluyen reglas adaptables y movimiento reducido, pero esa revisión de navegador sigue pendiente.
+El guardado de cuestionarios se ha comprobado con una selección pendiente, una respuesta corregida de entrenamiento y una pregunta ya contestada de simulacro. Se comprueba también la confirmación antes de reemplazar una ronda. El histograma se actualiza al editar los valores, y consultar el concepto conserva las respuestas y registra la ayuda.
+
+Se revisaron los 31 retos y la correspondencia entre cada uno y su ayuda conceptual. Se rasterizó el nuevo histograma a anchuras de 780 y 320 píxeles: ejes, intervalos, alturas, ceros y etiquetas correctos. Las nueve variantes de la función cubren vacíos, decimales, cifras negativas, no numéricas y muy grandes. La función visual no lee las soluciones del corrector.
+
+El navegador de prueba está bloqueado por restricciones del entorno. Las comprobaciones de eventos y SVG no equivalen a validar el CSS, los gestos, las capas adhesivas o las animaciones en Safari o en un iPhone físico. Esa revisión de navegador sigue pendiente.
 
 Configuración de Vercel contrastada con su [documentación de compilación](https://vercel.com/docs/builds/configure-a-build): para sitios estáticos se usa Other y se omite la compilación.

@@ -1,0 +1,543 @@
+/* EDA Quest · campaign clarity and comfortable study on a phone. */
+:root { --action-clearance: calc(88px + env(safe-area-inset-bottom)); }
+#main, .game-shell, .challenge-card, .challenge-board, .field-control,
+.world-layout, .quest-journal, .profile-grid > *, .practice-grid > * { min-width: 0; }
+button, input, select, textarea { max-width: 100%; }
+button, summary { -webkit-touch-callout: none; }
+input, select, textarea { font-size: 16px; }
+.field-control select, .quiz-settings select, .draft-select { font-size: 16px; min-width: 0; }
+button:focus-visible, summary:focus-visible, a:focus-visible { outline-offset: 3px; }
+button:disabled { touch-action: auto; }
+
+/* The next destination and the reason for a lock stay readable. */
+.campaign-strip {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(130px, .45fr);
+  align-items: center;
+  gap: 12px 20px;
+  padding: 15px 18px;
+  margin: 0 0 18px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: 0 3px 0 var(--tile-base);
+}
+.campaign-strip strong { font-size: 14px; line-height: 1.45; }
+.campaign-strip p, .campaign-strip small, .campaign-strip span { color: var(--muted); font-size: 13px; }
+.campaign-strip p, .campaign-strip small { display: block; margin-top: 2px; }
+.campaign-strip .progress-track { height: 9px; margin: 0; }
+.campaign-strip .campaign-count { color: var(--accent); font-weight: 800; white-space: nowrap; }
+.world-node.locked { opacity: 1; }
+.world-node:focus-visible { outline-offset: 1px; }
+.world-node.locked .node-number { border-style: dashed; color: #c7d0e9; }
+.world-node.locked .node-label { color: #d1daef; border-color: #55627f; }
+.world-node.locked .node-state { color: #c5cfe8; }
+.mission.locked, .bonus-dock.locked { opacity: 1; background: var(--field); border-style: dashed; }
+.mission.locked .mission-icon, .bonus-dock.locked > span:first-child { color: var(--faint); background: var(--raised); }
+.mission.locked .mission-number, .mission.locked .mission-body p { color: var(--muted); }
+.mission.locked:hover { transform: none; border-color: var(--line); }
+.mission .mission-bottom { flex-wrap: wrap; }
+.mission p, .map-mission-dock p, .journal-objectives p { font-size: 14px; line-height: 1.65; }
+.mission-number { font-size: 11px; }
+.mission .tiny, .bonus-dock em, .review-route small { font-size: 12px; }
+.bonus-dock strong, .review-route strong { font-size: 14px; }
+.bonus-dock small { font-size: 10px; }
+
+/* Locked missions explain the ordered route rather than ending in a toast. */
+.lock-sheet { text-align: left; }
+.lock-sheet h2 { max-width: 90%; }
+.lock-sheet > p, .lock-sheet .lock-intro { font-size: 15px; line-height: 1.6; }
+.unlock-steps {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 20px 0;
+}
+.unlock-steps li {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 65px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--field);
+}
+.unlock-steps .step-number, .unlock-steps .step-num, .unlock-steps .step-icon {
+  display: grid;
+  place-items: center;
+  width: 31px;
+  min-width: 31px;
+  height: 33px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--raised);
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--muted);
+}
+.unlock-steps .step-copy, .unlock-steps li > div { flex: 1; min-width: 0; }
+.unlock-steps strong { display: block; font-size: 14px; line-height: 1.4; }
+.unlock-steps small { display: block; margin-top: 3px; font-size: 12px; color: var(--muted); }
+.unlock-steps svg { width: 20px; height: 20px; flex: none; }
+.unlock-steps li.done { border-color: var(--accent); }
+.unlock-steps .done .step-number, .unlock-steps .done .step-num { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.unlock-steps li.next { border-color: var(--gold); background: color-mix(in srgb, var(--gold) 8%, var(--surface)); }
+.unlock-steps .next .step-number, .unlock-steps .next .step-num { color: var(--gold); border-color: var(--gold); }
+.unlock-steps li.waiting { border-style: dashed; }
+.lock-sheet .modal-actions .btn { min-height: 50px; }
+
+/* Briefings teach the two rules before play without a long decorative prelude. */
+.mission-goal { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 16px 0; color: var(--muted); font-size: 13px; }
+.mission-goal > span { display: inline-flex; align-items: center; gap: 7px; }
+.mission-goal svg { width: 18px; height: 18px; color: var(--gold); flex: none; }
+.mission-goal strong { color: var(--ink); }
+.mission-mini-map {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  list-style: none;
+  padding: 0;
+  margin: 16px 0;
+  gap: 7px;
+}
+.mission-mini-map > * {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 5px;
+  min-width: 0;
+  padding: 8px 4px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+  text-align: center;
+  border-radius: 10px;
+  background: var(--field);
+  border: 1px solid var(--line);
+}
+.mission-mini-map .done { color: var(--accent); border-color: var(--accent); }
+.mission-mini-map .current, .mission-mini-map .next { color: var(--gold); border-color: var(--gold); }
+.mission-mini-map svg { width: 19px; height: 19px; }
+.mission-rules .rule p { font-size: 15px; line-height: 1.65; }
+.briefing-intro { font-size: 15px; }
+.briefing-panel .helper-strip p, .helper-strip p { font-size: 14px; }
+.briefing-panel .start { min-height: 54px; font-size: 16px; }
+.mission-reward-preview > span { font-size: 12px; }
+.first-play-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 14px 16px;
+  border: 1px solid var(--purple);
+  border-radius: 15px;
+  background: color-mix(in srgb, var(--purple) 8%, var(--surface));
+  margin: 14px 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.first-play-tip > svg { width: 21px; height: 21px; color: var(--purple); flex: none; margin-top: 2px; }
+.first-play-tip > div { flex: 1; min-width: 0; }
+.first-play-tip strong { display: block; margin-bottom: 4px; }
+.first-play-tip p { color: var(--muted); font-size: 14px; }
+.first-play-tip button { flex: none; min-width: 44px; min-height: 44px; }
+.study-link { display: inline-flex; align-items: center; gap: 8px; text-align: left; min-height: 44px; padding: 9px 3px; font-size: 14px; font-weight: 700; color: var(--accent); border: 0; background: transparent; line-height: 1.5; }
+.study-link svg { width: 18px; height: 18px; flex: none; }
+
+/* Readable exercises, full labels, and input sizes that keep iOS from zooming. */
+.challenge-card h1 { font-size: clamp(24px, 4vw, 29px); line-height: 1.2; margin: 12px 0; }
+.challenge-prompt { color: var(--ink); font-size: 16px; line-height: 1.65; }
+.challenge-source { font-size: 11px; line-height: 1.5; }
+.instruction { font-size: 14px; line-height: 1.6; }
+.challenge-board { margin-top: 18px; }
+.challenge-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px 16px; margin: 16px 0 12px; padding: 12px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.challenge-toolbar .text-btn { min-height: 44px; font-size: 14px; flex: none; padding: 8px 4px; }
+.board-progress { min-width: 0; flex: 1; color: var(--muted); font-size: 13px; line-height: 1.4; }
+.board-progress > div:first-child, .board-progress > p { display: flex; justify-content: space-between; gap: 8px; margin: 0 0 7px; }
+.board-progress strong { color: var(--ink); font-weight: 800; }
+.board-progress .progress-track { height: 6px; max-width: 330px; margin-top: 7px; }
+.chip, .bin-chip { font-size: 14px; min-height: 46px; line-height: 1.45; overflow-wrap: anywhere; }
+.chip { padding: 11px 14px; }
+.bin-chip { padding: 9px 10px; }
+.bin { min-height: 118px; }
+.bin .bin-target { min-height: 52px; }
+.bin strong { font-size: 14px; }
+.bin small { font-size: 12px; line-height: 1.4; }
+.bin-items { align-items: flex-start; }
+.bin-items .bin-chip { width: auto; justify-content: flex-start; text-align: left; }
+.code-stack .chip { font-size: 13px; line-height: 1.65; }
+.placed-list .chip { font-size: 19px; }
+.placed-list.code-stack .chip { font-size: 13px; }
+.placed-list:not(.code-stack) > button.chip::before { font-size: 10px; }
+.order-placeholder, .order-footer { font-size: 13px; }
+.order-footer { flex-wrap: wrap; gap: 8px; }
+.field-row label, .box-labels label { font-size: 15px; line-height: 1.5; }
+.field-row { gap: 10px; }
+.field-control input, .field-control select, .box-labels input { font-size: 16px; height: 49px; }
+.field-unit { font-size: 13px; top: 15px; }
+.box-labels input { width: 105px; min-width: 85px; flex: none; }
+.box-labels label > span { min-width: 0; }
+.table-scroll { max-width: 100%; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
+.data-table { font-size: 14px; }
+.data-table th { font-size: 12px; letter-spacing: .025em; white-space: normal; }
+.data-table td, .data-table th { padding: 11px 12px; }
+.match-tile { font-size: 14px; line-height: 1.5; min-height: 91px; overflow-wrap: anywhere; align-content: center; }
+.match-tile .match-no { font-size: 11px; }
+.match-lines { font-size: 13px; line-height: 1.5; }
+.answer-option { font-size: 15px; line-height: 1.55; }
+.option-letter { font-size: 13px; }
+.hint-box, .audit-context { font-size: 15px; line-height: 1.65; }
+.game-actions { margin-top: 18px; padding: 10px 0 4px; }
+.game-actions .btn { font-size: 15px; min-height: 52px; }
+.game-actions .text-btn { font-size: 14px; }
+.game-footnote { font-size: 12px; line-height: 1.5; }
+
+/* The learner sees the outcome near the board and opens details deliberately. */
+.quick-feedback {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 9px;
+  padding: 14px;
+  margin: 15px 0;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: var(--raised);
+  font-size: 14px;
+  line-height: 1.55;
+  scroll-margin-top: 16px;
+}
+.quick-feedback > svg { width: 23px; height: 23px; flex: none; margin-top: 2px; }
+.quick-feedback strong { display: block; font-size: 15px; line-height: 1.4; }
+.quick-feedback p { margin: 3px 0 0; font-size: 14px; }
+.quick-feedback .text-btn { font-size: 13px; padding: 5px; min-height: 44px; }
+.quick-feedback.success { background: var(--accent-soft); border-color: var(--accent); }
+.quick-feedback.success > svg { color: var(--accent); }
+.quick-feedback.retry { background: var(--danger-soft); border-color: var(--danger); }
+.quick-feedback.retry > svg { color: var(--danger); }
+.quick-feedback.info { border-color: var(--purple); }
+.feedback { scroll-margin-bottom: calc(var(--action-clearance) + 84px); }
+.feedback p, .feedback-detail { font-size: 14px; line-height: 1.65; }
+.feedback-title { font-size: 16px; }
+.feedback summary { min-height: 44px; padding: 10px 0; font-size: 14px; cursor: pointer; color: var(--accent); font-weight: 750; }
+.feedback.collapsed { padding: 13px 17px; }
+.feedback.collapsed details:not([open]) > summary { margin: 0; }
+.feedback-detail b { font-size: 14px; }
+.solution-box { font-size: 14px; line-height: 1.6; }
+.solution-box dl { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.needs-review { scroll-margin-top: 18px; scroll-margin-bottom: calc(var(--action-clearance) + 80px); }
+
+/* Resuming and unlocking are prominent, short, and actionable. */
+.session-resume-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 17px;
+  padding: 15px 17px;
+  border: 1px solid var(--accent);
+  border-radius: 18px;
+  background: var(--accent-soft);
+}
+.session-resume-card > div { min-width: 0; }
+.session-resume-card strong { display: block; font-size: 14px; line-height: 1.4; }
+.session-resume-card p, .session-resume-card small { color: var(--muted); font-size: 12px; line-height: 1.5; margin-top: 3px; }
+.session-resume-card .btn { flex: none; min-height: 47px; padding: 10px 14px; font-size: 14px; }
+.unlock-card {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr);
+  align-items: center;
+  gap: 13px 17px;
+  margin: 22px 0;
+  padding: 20px;
+  border: 1px solid var(--gold);
+  border-radius: 21px;
+  background: linear-gradient(130deg, color-mix(in srgb, var(--gold) 10%, var(--surface)), var(--surface));
+  text-align: left;
+  box-shadow: 0 4px 0 var(--tile-base);
+}
+.unlock-card .unlock-icon, .unlock-card > svg { width: 54px; height: 54px; padding: 12px; border: 1px solid var(--gold); border-radius: 16px; color: var(--gold); background: var(--field); }
+.unlock-card .unlock-icon svg { width: 28px; height: 28px; }
+.unlock-card strong, .unlock-card h2 { font-size: 19px; line-height: 1.3; }
+.unlock-card .eyebrow { font-size: 10px; color: var(--gold); margin-bottom: 6px; display: block; }
+.unlock-card p { color: var(--muted); font-size: 14px; line-height: 1.6; margin-top: 6px; }
+.unlock-card .btn { grid-column: 1 / -1; width: 100%; }
+.result-metric small { font-size: 12px; line-height: 1.45; display: block; margin-top: 3px; }
+.result > p { font-size: 15px; }
+.result-report .report-line p { font-size: 14px; }
+.result-report .report-line strong { font-size: 15px; }
+
+/* Study and skill summaries use the same comfortable type scale. */
+.lesson summary { font-size: 15px; line-height: 1.4; }
+.lesson-content, .lesson-example { font-size: 15px; line-height: 1.7; }
+.lesson-content .text-btn { font-size: 14px; }
+.filter-btn { font-size: 14px; min-height: 44px; }
+.practice-tile p, .practice-tile .tile-link { font-size: 14px; }
+.practice-tile { min-height: 190px; }
+.quiz-settings label, .rubric-check, .quiz-review summary, .quiz-review p { font-size: 14px; }
+.settings-row { font-size: 15px; }
+.settings-row small { font-size: 13px; line-height: 1.5; }
+.badge-item { opacity: 1; }
+.badge-item:not(.on) { color: var(--muted); background: var(--field); }
+.badge-item small { font-size: 12px; }
+.profile-head p { font-size: 14px; }
+.about { font-size: 14px; }
+.about h3 { font-size: 17px; }
+.profile-skill-list { display: grid; gap: 12px; margin-top: 19px; }
+.skill-summary { padding: 16px; border: 1px solid var(--line); border-radius: 15px; background: var(--field); }
+.skill-summary.locked { border-style: dashed; }
+.skill-summary .skill-heading, .skill-summary > .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.skill-summary strong { font-size: 15px; line-height: 1.4; }
+.skill-summary p { margin-top: 7px; color: var(--muted); font-size: 13px; line-height: 1.55; }
+.skill-summary small { color: var(--muted); font-size: 12px; }
+.skill-summary .progress-track { margin: 9px 0; height: 7px; }
+.skill-summary .text-btn { font-size: 13px; padding-bottom: 0; }
+.skill-summary .stars svg { width: 14px; height: 14px; }
+
+@media (max-width: 700px) {
+  html[data-page="game"] .topbar { min-height: 66px; padding-top: 10px; padding-bottom: 10px; }
+  html[data-page="game"] .brand small { display: none; }
+  .game-play > .mission-scene { margin-bottom: 9px; border-radius: 16px; max-height: 82px; }
+  .game-play > .mission-scene > svg { height: 82px; width: 100%; }
+  .game-top.game-hud { padding: 10px 11px; margin: 0 0 12px; gap: 9px; }
+  .game-hud .game-track .row { font-size: 12px; line-height: 1.4; }
+  .game-hud .game-track .hud-counter { font-size: 12px; }
+  .game-hud .chapter-label { font-size: 10px; }
+  .game-status .combo { font-size: 12px; }
+  .game-play .evidence-bar { margin-top: 11px; row-gap: 7px; }
+  .game-play .evidence-bar > span { font-size: 12px; }
+  .game-play .evidence-bar > strong { font-size: 13px; }
+  .evidence-slot { width: 20px; height: 21px; }
+  .game-play > .byte-message { grid-template-columns: 50px minmax(0, 1fr); gap: 8px; margin: 12px 0; }
+  .game-play > .byte-message .byte-portrait, .game-play > .byte-message .byte-portrait > svg { width: 55px; height: 62px; }
+  .game-play > .byte-message .byte-bubble { padding: 11px 13px; }
+  .game-play > .byte-message p { font-size: 13px; line-height: 1.55; }
+  .byte-bubble p { font-size: 14px; line-height: 1.6; }
+  .byte-name { font-size: 10px; }
+  .challenge-card { padding: 19px 16px; border-radius: 21px; }
+  .challenge-card > .row .eyebrow { font-size: 10px; line-height: 1.5; }
+  .challenge-prompt { font-size: 15px; line-height: 1.65; }
+  .challenge-source { font-size: 11px; }
+  .challenge-toolbar { gap: 9px; margin-top: 13px; padding: 9px 0; }
+  .challenge-toolbar .text-btn { font-size: 13px; }
+  .instruction { font-size: 14px; }
+  .chip { font-size: 14px; padding: 10px 12px; }
+  .chip-pool { padding: 12px 10px 15px; gap: 10px 8px; }
+  .bin { padding: 10px; min-height: 112px; }
+  .bin strong { font-size: 13px; }
+  .bin small { font-size: 12px; }
+  .bin-chip { font-size: 13px; padding: 8px; }
+  .field-row { padding: 13px; }
+  .field-row label, .box-labels label { font-size: 15px; }
+  .match-tile { display: grid; grid-template-columns: 25px minmax(0, 1fr); gap: 8px; font-size: 14px; min-height: 104px; padding: 12px 10px; }
+  .match-tile > .match-no { grid-column: 1; width: 24px; height: 25px; font-size: 11px; }
+  .match-tile > span:not(.match-no) { grid-column: 1 / -1; }
+  .match-tile svg.chart-mini { grid-column: 2; grid-row: 1; width: 100%; height: 35px; max-width: 65px; justify-self: end; }
+  .match-lines { font-size: 13px; }
+  .answer-option { font-size: 15px; padding: 14px 12px; }
+  .game-play .game-actions {
+    position: sticky;
+    bottom: var(--action-clearance);
+    z-index: 25;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: stretch;
+    padding: 11px;
+    margin: 19px -6px 0;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    box-shadow: 0 7px 24px #080d2530;
+  }
+  .game-play .game-actions > .btn { flex: 1; min-width: 0; font-size: 15px; min-height: 51px; width: auto; }
+  .game-play .game-actions > .text-btn { flex: 0 1 auto; font-size: 13px; align-self: center; }
+  .game-play .feedback .game-actions { position: static; padding: 0; margin: 15px 0 0; border: 0; box-shadow: none; background: none; }
+  .quick-feedback { grid-template-columns: 22px minmax(0, 1fr); padding: 13px; gap: 7px 9px; }
+  .quick-feedback > .text-btn, .quick-feedback > button { grid-column: 2; justify-self: start; padding: 4px 0; min-height: 44px; }
+  .quick-feedback p { font-size: 14px; }
+  .feedback { padding: 17px 14px; }
+  .feedback summary { font-size: 14px; }
+  .campaign-strip { grid-template-columns: 1fr; gap: 11px; padding: 14px 16px; }
+  .campaign-strip strong { font-size: 14px; }
+  .campaign-strip .progress-track { height: 8px; }
+  .world-heading p { font-size: 14px; }
+  .world-map-caption { font-size: 9px; line-height: 1.5; }
+  .world-legend { font-size: 11px; line-height: 1.4; }
+  .node-state { font-size: 9px; line-height: 1.35; }
+  .node-label { font-size: 11px; }
+  .world-heading { margin-bottom: 15px; }
+  .quest-journal { gap: 15px; }
+  .map-mission-dock { padding: 20px; }
+  .map-mission-dock p { font-size: 14px; }
+  .journal-objectives p { font-size: 14px; }
+  .journal-objectives small { font-size: 12px; }
+  .briefing { padding: 0; }
+  .briefing-panel { padding: 22px 18px; }
+  .briefing-panel h1 { font-size: 28px; }
+  .briefing-panel .byte-message { margin: 16px 0; }
+  .briefing-panel .byte-bubble { padding: 12px 14px; }
+  .mission-rules .rule { padding: 15px 0; }
+  .mission-rules .rule p { font-size: 15px; }
+  .briefing-panel .mission-reward-preview { margin-top: 17px; padding-top: 15px; }
+  .mission-reward-preview > span { font-size: 12px; }
+  .briefing-panel .helper-strip p { font-size: 14px; }
+  .session-resume-card { flex-wrap: wrap; padding: 14px 16px; }
+  .session-resume-card > div { flex: 1 1 160px; }
+  .session-resume-card .btn { flex: 1 0 110px; }
+  .unlock-card { padding: 18px; gap: 12px; }
+  .unlock-card strong, .unlock-card h2 { font-size: 18px; }
+  .result-metric small { font-size: 11px; }
+  .result-metric { padding: 15px 9px; }
+  .result h1 { font-size: 29px; }
+  .practice-grid { grid-template-columns: 1fr; }
+  .practice-tile { min-height: 0; padding: 21px; gap: 10px; }
+  .practice-tile p { font-size: 14px; line-height: 1.65; }
+  .practice-tile h2 { font-size: 22px; }
+  .practice-tile .tile-link { margin-top: 6px; font-size: 14px; }
+  .quiz-settings { display: grid; grid-template-columns: 1fr; gap: 15px; }
+  .quiz-settings label { font-size: 14px; }
+  .quiz-settings select { width: 100%; min-width: 0; font-size: 16px; }
+  .lesson summary { font-size: 15px; padding: 17px; }
+  .lesson-content { font-size: 15px; padding: 0 17px 18px; }
+  .lesson-example { font-size: 14px; }
+  .settings-row small { font-size: 13px; }
+  .badge-item small { font-size: 11px; }
+  .bottom-nav button { font-size: 11px; }
+  .modal { max-height: calc(100dvh - 30px - env(safe-area-inset-bottom)); padding: 22px 19px; }
+}
+@media (max-width: 370px) {
+  .game-play .game-hud { gap: 7px; padding: 9px; }
+  .game-play .game-status .combo { display: none; }
+  .game-play .game-track .row > span { white-space: normal; line-height: 1.25; }
+  .game-play .game-status .icon-btn { width: 44px; min-width: 44px; }
+  .challenge-card { padding: 18px 13px; }
+  .challenge-card h1 { font-size: 24px; }
+  .challenge-toolbar { flex-wrap: wrap; }
+  .board-progress { flex: 1 1 145px; }
+  .match-grid { gap: 8px; }
+  .match-tile { padding: 10px 8px; font-size: 14px; gap: 7px; }
+  .match-tile > span:not(.match-no) { overflow-wrap: anywhere; }
+  .bin { padding: 9px; }
+  .bin strong { font-size: 13px; }
+  .bin-chip { font-size: 13px; }
+  .unlock-steps li { padding: 11px; }
+  .mission-mini-map { gap: 5px; }
+  .mission-mini-map > * { font-size: 10px; padding: 7px 2px; }
+  .result-grid { gap: 7px; }
+  .result-metric strong { font-size: 23px; }
+  .result-metric small { font-size: 11px; }
+  .first-play-tip { padding: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .campaign-strip, .quick-feedback, .unlock-card { animation: none; }
+}
+
+/* Final markup integration: icons are wrapped, the campaign CTA precedes the map. */
+.campaign-strip { grid-template-columns: minmax(0, 1fr) auto; row-gap: 8px; }
+.campaign-strip > div:first-child { grid-column: 1; grid-row: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.campaign-strip > div:first-child .eyebrow { color: var(--accent); font-size: 10px; line-height: 1.3; }
+.campaign-strip > .progress-track { grid-column: 1 / -1; grid-row: 2; margin: 0; }
+.campaign-strip > small { grid-column: 1 / -1; grid-row: 3; margin: 0; line-height: 1.45; }
+.campaign-strip .campaign-start { grid-column: 2; grid-row: 1; min-height: 49px; max-width: 210px; padding: 11px 16px; font-size: 14px; }
+.mission-mini-map { margin: 13px 0; }
+.mission-mini-map > li { min-height: 40px; padding: 8px 4px; justify-content: center; }
+.mission-mini-map > li > span { display: grid; place-items: center; min-width: 20px; height: 20px; font-size: 13px; font-weight: 800; }
+.mission-mini-map .active { color: var(--gold); border-color: var(--gold); background: color-mix(in srgb, var(--gold) 10%, var(--surface)); }
+.mission-mini-map .locked { border-style: dashed; }
+.lock-title { display: flex; align-items: center; gap: 11px; padding: 15px; background: var(--field); border: 1px solid var(--line); border-radius: 14px; margin-top: 17px; }
+.lock-title > svg { width: 24px; height: 24px; color: var(--purple); flex: none; }
+.lock-title strong { font-size: 16px; line-height: 1.4; }
+.session-resume-card { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; }
+.session-resume-card .resume-icon { display: grid; place-items: center; width: 38px; height: 40px; color: var(--accent); border-radius: 12px; background: var(--surface); border: 1px solid var(--line); }
+.resume-icon svg { width: 22px; height: 22px; }
+.session-resume-card.waiting { background: var(--field); border-color: var(--line); }
+.session-resume-card.waiting .resume-icon { color: var(--purple); }
+.game-track .row > span { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: break-word; }
+.challenge-toolbar > strong { min-width: 0; font-size: 14px; line-height: 1.4; }
+.challenge-toolbar > div { display: flex; align-items: center; gap: 8px; flex: none; }
+.challenge-toolbar > div > button { font-size: 13px; padding: 7px 3px; gap: 5px; }
+#board-progress { margin: 11px 0 16px; }
+.board-progress > span { display: block; color: var(--ink); font-size: 13px; font-weight: 750; }
+.board-progress > small { display: block; margin-top: 7px; color: var(--muted); font-size: 12px; line-height: 1.45; }
+.board-progress .progress-track { max-width: none; }
+.quick-feedback { position: relative; grid-template-columns: 24px minmax(0, 1fr); }
+.quick-feedback > span:first-child { display: grid; place-items: center; width: 24px; height: 26px; }
+.quick-feedback > span:first-child > svg { width: 23px; height: 23px; }
+.quick-feedback > div { min-width: 0; }
+.quick-feedback.success > span:first-child { color: var(--accent); }
+.quick-feedback.retry > span:first-child { color: var(--danger); }
+.quick-feedback.info > span:first-child { color: var(--purple); }
+.quick-feedback > .xp-burst { position: absolute; left: 50%; top: -12px; pointer-events: none; }
+.feedback-explanation { padding: 10px 16px; }
+.feedback-explanation > summary { display: flex; align-items: center; gap: 9px; font-size: 14px; min-height: 44px; line-height: 1.4; list-style: none; }
+.feedback-explanation > summary::-webkit-details-marker { display: none; }
+.feedback-explanation > summary > svg { width: 20px; height: 20px; flex: none; }
+.feedback-explanation > summary::after { content: '+'; flex: none; margin-left: auto; font-size: 23px; font-weight: 500; }
+.feedback-explanation[open] > summary::after { content: '−'; }
+.feedback-explanation > summary:focus-visible { outline-offset: 1px; }
+.feedback-explanation > p { margin-top: 10px; }
+.concept-lessons { display: grid; gap: 12px; margin-top: 19px; }
+.concept-lesson { min-width: 0; border: 1px solid var(--line); border-radius: 15px; background: var(--field); padding: 0 15px; }
+.concept-lesson > summary { display: flex; align-items: center; gap: 10px; list-style: none; padding: 14px 0; min-height: 52px; font-size: 16px; font-weight: 750; line-height: 1.4; cursor: pointer; }
+.concept-lesson > summary::-webkit-details-marker { display: none; }
+.concept-lesson > summary::after { content: '+'; font-size: 22px; font-weight: 400; color: var(--accent); margin-left: auto; flex: none; }
+.concept-lesson[open] > summary::after { content: '−'; }
+.concept-lesson > p { font-size: 15px; line-height: 1.7; margin: 0 0 13px; }
+.concept-lesson .lesson-example { background: var(--surface); padding: 13px; margin: 13px 0 15px; }
+.concept-lesson .lesson-example p { font-size: 14px; line-height: 1.65; margin: 6px 0 0; }
+.modal-close { position: sticky; top: 0; z-index: 2; margin-left: 12px; }
+.profile-skill-list .skill-summary { display: grid; grid-template-columns: 35px minmax(0, 1fr) 44px; align-items: center; gap: 12px; }
+.profile-skill-list .skill-summary > div { min-width: 0; }
+.profile-skill-list .skill-summary strong, .profile-skill-list .skill-summary small { display: block; }
+.profile-skill-list .skill-summary small { margin-top: 4px; line-height: 1.5; }
+.skill-icon { display: grid; place-items: center; width: 35px; height: 40px; color: var(--accent); }
+.skill-summary.locked .skill-icon { color: var(--faint); }
+.skill-icon svg { width: 27px; height: 27px; }
+.quiz-save-note { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 13px; line-height: 1.5; margin: 4px 0 17px; }
+.quiz-save-note svg { width: 17px; height: 17px; color: var(--accent); flex: none; }
+.live-histogram { margin: 18px 0; padding: 15px; border: 1px solid var(--line); border-radius: 17px; background: var(--field); }
+.histogram-heading { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 4px 12px; margin-bottom: 8px; }
+.histogram-heading strong { font-size: 16px; }
+.histogram-heading span { color: var(--muted); font-size: 12px; line-height: 1.5; }
+.live-histogram > svg { display: block; width: 100%; height: auto; }
+.histogram-summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 5px 12px; padding: 11px 0 0; border-top: 1px solid var(--line); }
+.histogram-summary strong { color: var(--accent); font-size: 14px; line-height: 1.4; overflow-wrap: anywhere; }
+.histogram-summary span { color: var(--muted); font-size: 12px; line-height: 1.5; }
+.histogram-note { font-size: 12px; line-height: 1.55; color: var(--muted); margin-top: 9px; }
+.histogram-bar { transition: y .18s ease, height .18s ease; }
+.histogram-bin.invalid .histogram-pending, .histogram-bin.fraction .histogram-value { fill: var(--danger); }
+@media (max-width: 700px) {
+  .campaign-strip { grid-template-columns: minmax(0, 1fr) auto; padding: 13px 15px; column-gap: 12px; row-gap: 7px; }
+  .campaign-strip .campaign-start { max-width: 155px; font-size: 14px; min-height: 49px; padding: 10px 12px; }
+  .session-resume-card { grid-template-columns: 34px minmax(0, 1fr) auto; gap: 10px; }
+  .session-resume-card .resume-icon { width: 34px; height: 37px; }
+  .session-resume-card .btn { font-size: 13px; padding: 10px 12px; }
+  .challenge-toolbar { flex-wrap: nowrap; }
+  .challenge-toolbar > div { gap: 7px; }
+  .challenge-toolbar > strong { flex: 1; }
+  .game-play .challenge-board { padding-bottom: 88px; scroll-margin-bottom: calc(var(--action-clearance) + 96px); }
+  .game-play .challenge-board :is(button, input, select), .game-play .feedback-explanation > summary { scroll-margin-bottom: calc(var(--action-clearance) + 96px); }
+  .game-play .game-actions { min-height: 76px; margin-top: 13px; }
+  .game-play .game-actions > .text-btn { min-width: 0; font-size: 13px; }
+  .profile-skill-list .skill-summary { grid-template-columns: 28px minmax(0, 1fr) 44px; gap: 10px; padding: 14px 12px; }
+  .skill-icon { width: 28px; }
+  .skill-icon svg { width: 24px; height: 24px; }
+  .live-histogram { padding: 12px 9px; }
+  .histogram-svg text { font-size: 22px; }
+  .histogram-svg .histogram-pending { font-size: 26px; }
+  .histogram-heading { margin-bottom: 9px; }
+  .histogram-heading span { font-size: 12px; }
+  .quick-feedback { grid-template-columns: 22px minmax(0, 1fr); }
+}
+@media (max-width: 370px) {
+  .campaign-strip .campaign-start { max-width: 132px; }
+  .campaign-strip strong { font-size: 13px; }
+  .campaign-strip > div:first-child .eyebrow { font-size: 9px; }
+  .session-resume-card { grid-template-columns: 34px minmax(0, 1fr); }
+  .session-resume-card .btn { grid-column: 2; justify-self: start; width: auto; }
+  .challenge-toolbar > strong { font-size: 13px; }
+  .challenge-toolbar > div { gap: 5px; }
+  .challenge-toolbar > div > button { font-size: 12px; gap: 4px; }
+}
